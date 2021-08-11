@@ -20,6 +20,7 @@
     "*.scss"
   ],
   "scripts": {
+    "dev": "vue-cli-service serve",
     "start": "vuepress dev docs",
     "build": "rimraf -rf lib esm dist && npm run create:style && npm run build:cjs && npm run build:esm && npm run build:umd && npm run build:style",
     "create:style": "ts-node create-style",
@@ -35,6 +36,7 @@
     "@vuepress-dumi/vuepress-theme-dumi": "0.3.3",
     "@vuepress/plugin-back-to-top": "^1.8.2",
     "@vuepress/plugin-medium-zoom": "^1.8.2",
+    "@vue/cli-service": "~4.5.0",
     "axios": "^0.21.1",
     "core-js": "^2.4.0",
     "element-ui": "^2.15.2",
