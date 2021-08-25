@@ -28,6 +28,7 @@ import { DesignableFormTab } from '../DesignableFormTab'
 import { DesignableFormCollapse } from '../DesignableFormCollapse'
 import { DesignableArrayTable } from '../DesignableArrayTable'
 import { DesignableArrayCards } from '../DesignableArrayCards'
+import { DesignableText } from '../DesignableText'
 import { TreeNode } from '@designable/core'
 
 const isChildrenComponents =
@@ -70,6 +71,8 @@ const allowDropWithEmpty = (name: string, node: TreeNode, target: TreeNode) => {
   return false
 }
 
+const noChildren = () => false
+
 export const createOptions = (
   options: IDesignableFieldFactoryProps
 ): IDesignableFieldFactoryProps => {
@@ -106,14 +109,42 @@ export const createOptions = (
       FormCollapse: [allowDropWithEmpty, 'FormCollapse.CollapsePanel'],
       ArrayTable: [allowDropWithEmpty, isObjectNode, 'ArrayTable.Addition'],
       'ArrayTable.Column': [isNotArrayColumn],
+      Text: [noChildren],
     },
     restrictSiblingComponents: {
       'FormTab.TabPane': ['FormTab.TabPane'],
-      'FormCollapse.CollapsePanel': [
-        allowDropWithEmpty,
-        'FormCollapse.CollapsePanel',
-      ],
+      'FormCollapse.CollapsePanel': ['FormCollapse.CollapsePanel'],
       'ArrayTable.Column': ['ArrayTable.Column'],
+    },
+    componentsSourceIcon: {
+      ...options.componentsSourceIcon,
+      Space: 'SpaceSource',
+      FormGrid: 'GridSource',
+      FormTab: 'TabSource',
+      FormCollapse: 'CollapseSource',
+      ArrayTable: 'ArrayTableSource',
+      ArrayCards: 'ArrayCardsSource',
+      DatePicker: 'DatePickerSource',
+      'DatePicker.RangePicker': 'DateRangePickerSource',
+      'Checkbox.Group': 'CheckboxGroupSource',
+      'Radio.Group': 'RadioGroupSource',
+      Slider: 'SliderSource',
+      Rate: 'RateSource',
+      TimePicker: 'TimePickerSource',
+      'TimePicker.RangePicker': 'TimeRangePickerSource',
+      Cascader: 'CascaderSource',
+      TreeSelect: 'TreeSelectSource',
+      Select: 'SelectSource',
+      'Input.TextArea': 'TextAreaSource',
+      Input: 'InputSource',
+      NumberPicker: 'NumberPickerSource',
+      Password: 'PasswordSource',
+      Transfer: 'TransferSource',
+      Switch: 'SwitchSource',
+      Upload: 'UploadSource',
+      'Upload.Dragger': 'UploadDraggerSource',
+      Card: 'CardSource',
+      FormLayout: 'FormLayoutSource',
     },
     components: {
       ...options.components,
@@ -124,6 +155,7 @@ export const createOptions = (
       FormCollapse: DesignableFormCollapse,
       ArrayTable: DesignableArrayTable,
       ArrayCards: DesignableArrayCards,
+      Text: DesignableText,
       FormItem,
       DatePicker,
       Checkbox,

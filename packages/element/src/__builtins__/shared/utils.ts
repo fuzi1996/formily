@@ -17,6 +17,12 @@ export function isVueOptions(options) {
   )
 }
 
+/**
+ * 组合输出
+ * @param s0
+ * @param s1
+ * @returns
+ */
 export function composeExport<T0 extends {}, T1 extends {}>(
   s0: T0,
   s1: T1

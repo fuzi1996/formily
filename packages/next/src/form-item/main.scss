@@ -24,6 +24,7 @@
 
   &-inset {
     padding: 0 8px;
+    border: 1px solid $input-border-color;
     border-radius: $form-element-medium-corner;
     width: 100%;
 
@@ -150,6 +151,7 @@
           .#{$css-prefix}input-control {
             margin-right: 0;
             padding-right: 0;
+
             .#{$css-prefix}icon {
               display: none;
             }
@@ -161,6 +163,15 @@
             }
           }
         }
+      }
+
+      .#{$css-prefix}range {
+        height: 100%;
+        padding-left: 2px;
+      }
+      .#{$css-prefix}transfer {
+        display: flex;
+        align-items: center;
       }
     }
 
@@ -343,7 +354,7 @@
   > .#{$form-item-cls}-control {
     > .#{$form-item-cls}-control-content {
       > .#{$form-item-cls}-control-content-component {
-        > *:first-child:not(.#{$css-prefix}switch) {
+        > *:first-child:not(.#{$css-prefix}switch, .#{$css-prefix}icon, .anticon) {
           width: 100%;
         }
       }

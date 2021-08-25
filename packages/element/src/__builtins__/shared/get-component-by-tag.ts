@@ -10,11 +10,28 @@ export const getComponentByTag = <T extends Record<string, any>>(
   transformRules?: ListenersTransformRules,
   defaultProps?: Partial<T>
 ): Component<T> | any => {
+  console.log(
+    'tag',
+    tag,
+    'transformRules',
+    transformRules,
+    'defaultProps',
+    defaultProps
+  )
   if (isVue2) {
     return {
       functional: true,
       render(h, context) {
+        // 每次数据改变都会重新渲染
         const data = context.data
+        console.log(
+          'context',
+          context,
+          'context.data',
+          data,
+          'listeners',
+          transformRules
+        )
         if (transformRules) {
           const listeners = transformRules
           Object.keys(listeners).forEach((extract) => {

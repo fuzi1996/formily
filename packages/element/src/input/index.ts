@@ -31,4 +31,6 @@ export const Input = composeExport(InnerInput, {
   TextArea,
 })
 
+console.log('Input', Input)
+
 export default Input
