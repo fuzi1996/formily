@@ -36,7 +36,7 @@ import {
   onFormValuesChange,
   isVoidField,
 } from '../'
-import { runEffects } from '../shared/effectbox'
+import { runEffects } from '../shared/effective'
 import { attach, sleep } from './shared'
 
 test('onFormInit/onFormMount/onFormUnmount', () => {
@@ -422,13 +422,17 @@ test('onFieldValidate', async () => {
       required: true,
     })
   )
-  await field.validate()
+  try {
+    await field.validate()
+  } catch {}
   expect(validateStart).toBeCalled()
   expect(validateFailed).toBeCalled()
   expect(validateSuccess).not.toBeCalled()
   expect(validateEnd).toBeCalled()
   field.setValue('123')
-  await field.validate()
+  try {
+    await field.validate()
+  } catch {}
   expect(validateStart).toBeCalledTimes(2)
   expect(validateFailed).toBeCalledTimes(1)
   expect(validateSuccess).toBeCalledTimes(1)

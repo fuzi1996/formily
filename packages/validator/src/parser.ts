@@ -21,6 +21,7 @@ const getRuleMessage = (rule: IValidatorRules, type: string) => {
 export const parseValidatorDescription = (
   description: ValidatorDescription
 ): IValidatorRules => {
+  if (!description) return {}
   let rules: IValidatorRules = {}
   if (isStr(description)) {
     rules.format = description
@@ -29,30 +30,41 @@ export const parseValidatorDescription = (
   } else {
     rules = Object.assign(rules, description)
   }
-  rules.triggerType = rules.triggerType || 'onInput'
   return rules
 }
 
 export const parseValidatorDescriptions = <Context = any>(
   validator: Validator<Context>
 ): IValidatorRules[] => {
+  if (!validator) return []
   const array = isArr(validator) ? validator : [validator]
   return array.map((description) => {
     return parseValidatorDescription(description)
   })
 }
 
-export const parseIValidatorRules = (
-  rules: IValidatorRules
+export const parseValidatorRules = (
+  rules: IValidatorRules = {}
 ): ValidatorParsedFunction[] => {
-  const rulesKeys = Object.keys(rules || {}).sort((key) =>
-    key === 'validator' ? 1 : -1
-  )
+  const getRulesKeys = (): string[] => {
+    const keys = []
+    if ('required' in rules) {
+      keys.push('required')
+    }
+    for (let key in rules) {
+      if (key === 'required' || key === 'validator') continue
+      keys.push(key)
+    }
+    if ('validator' in rules) {
+      keys.push('validator')
+    }
+    return keys
+  }
   const getContext = (context: any, value: any) => {
     return {
-      value,
       ...rules,
       ...context,
+      value,
     }
   }
   const createValidate =
@@ -70,7 +82,7 @@ export const parseIValidatorRules = (
                 type: 'error',
                 message,
               },
-              { ...context_, ...scope }
+              Object.assign(context_, scope)
             )?.message
           }
         )
@@ -112,11 +124,13 @@ export const parseIValidatorRules = (
         }
       }
     }
-  return rulesKeys.reduce((buf, key) => {
+  return getRulesKeys().reduce((buf, key) => {
     const callback = getValidateRules(key)
-    return callback
-      ? buf.concat(createValidate(callback, getRuleMessage(rules, key)))
-      : buf
+    if (callback) {
+      const validator = createValidate(callback, getRuleMessage(rules, key))
+      return buf.concat(validator)
+    }
+    return buf
   }, [])
 }
 
@@ -124,12 +138,16 @@ export const parseValidator = <Context = any>(
   validator: Validator<Context>,
   options: IValidatorOptions = {}
 ) => {
+  if (!validator) return []
   const array = isArr(validator) ? validator : [validator]
-  const results: ValidatorParsedFunction<Context>[] = []
-  return array.reduce((buf, description) => {
-    const rules = parseValidatorDescription(description)
-    if (options?.triggerType && options.triggerType !== rules.triggerType)
-      return buf
-    return rules ? buf.concat(parseIValidatorRules(rules)) : buf
-  }, results)
+  return array.reduce<ValidatorParsedFunction<Context>[]>(
+    (buf, description) => {
+      const rules = parseValidatorDescription(description)
+      const triggerType = rules.triggerType ?? 'onInput'
+      if (options?.triggerType && options.triggerType !== triggerType)
+        return buf
+      return rules ? buf.concat(parseValidatorRules(rules)) : buf
+    },
+    []
+  )
 }

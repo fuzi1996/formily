@@ -75,12 +75,11 @@ export function createSchemaField<Components extends SchemaReactComponents>(
   }
 
   SchemaField.displayName = 'SchemaField'
+
   function MarkupField<
     Decorator extends ReactComponentPath<Components>,
     Component extends ReactComponentPath<Components>
-  >(
-    props: ISchemaMarkupFieldProps<Components, Component, Decorator>
-  ): React.ReactElement {
+  >(props: ISchemaMarkupFieldProps<Components, Component, Decorator>) {
     const parent = useContext(SchemaMarkupContext)
     if (!parent) return <Fragment />
     const renderChildren = () => {
@@ -197,5 +196,6 @@ export function createSchemaField<Components extends SchemaReactComponents>(
   SchemaField.DateTime = DateTimeField
   SchemaField.Void = VoidField
   SchemaField.Number = NumberField
+
   return SchemaField
 }

@@ -1,10 +1,9 @@
-import React, { useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import cls from 'classnames'
 import { usePrefixCls, pickDataProps } from '../__builtins__'
 import { isVoidField } from '@formily/core'
 import { connect, mapProps } from '@formily/react'
 import { useFormLayout, FormLayoutShallowContext } from '../form-layout'
-import { useGridSpan } from '../form-grid'
 import { Tooltip, Popover } from 'antd'
 import {
   QuestionCircleOutlined,
@@ -20,6 +19,7 @@ export interface IFormItemProps {
   label?: React.ReactNode
   colon?: boolean
   tooltip?: React.ReactNode
+  tooltipIcon?: React.ReactNode
   layout?: 'vertical' | 'horizontal' | 'inline'
   tooltipLayout?: 'icon' | 'text'
   labelStyle?: React.CSSProperties
@@ -42,6 +42,7 @@ export interface IFormItemProps {
   feedbackLayout?: 'loose' | 'terse' | 'popover' | 'none' | (string & {})
   feedbackStatus?: 'error' | 'warning' | 'success' | 'pending' | (string & {})
   feedbackIcon?: React.ReactNode
+  getPopupContainer?: (node: HTMLElement) => HTMLElement
   asterisk?: boolean
   gridSpan?: number
   bordered?: boolean
@@ -76,6 +77,9 @@ const useFormItemLayout = (props: IFormItemProps) => {
     feedbackIcon: props.feedbackIcon,
     feedbackLayout: props.feedbackLayout ?? layout.feedbackLayout ?? 'loose',
     tooltipLayout: props.tooltipLayout ?? layout.tooltipLayout ?? 'icon',
+    tooltipIcon: props.tooltipIcon ?? layout.tooltipIcon ?? (
+      <QuestionCircleOutlined />
+    ),
   }
 }
 
@@ -86,8 +90,10 @@ function useOverflow<
   const [overflow, setOverflow] = useState(false)
   const containerRef = useRef<Container>()
   const contentRef = useRef<Content>()
+  const layout = useFormLayout()
+  const labelCol = JSON.stringify(layout.labelCol)
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (containerRef.current && contentRef.current) {
       const contentWidth = contentRef.current.getBoundingClientRect().width
       const containerWidth = containerRef.current.getBoundingClientRect().width
@@ -97,7 +103,7 @@ function useOverflow<
         if (overflow) setOverflow(false)
       }
     }
-  }, [])
+  }, [labelCol])
 
   return {
     overflow,
@@ -112,11 +118,9 @@ const ICON_MAP = {
   warning: <ExclamationCircleOutlined />,
 }
 
-export const BaseItem: React.FC<IFormItemProps> = (props) => {
-  const { children, ...others } = props
-  const [active, setActice] = useState(false)
-  const formLayout = useFormItemLayout(others)
-  const gridSpan = useGridSpan(props.gridSpan)
+export const BaseItem: React.FC<IFormItemProps> = ({ children, ...props }) => {
+  const [active, setActive] = useState(false)
+  const formLayout = useFormItemLayout(props)
   const { containerRef, contentRef, overflow } = useOverflow<
     HTMLDivElement,
     HTMLLabelElement
@@ -135,6 +139,7 @@ export const BaseItem: React.FC<IFormItemProps> = (props) => {
     fullness,
     feedbackLayout,
     feedbackIcon,
+    getPopupContainer,
     inset,
     bordered = true,
     labelWidth,
@@ -148,6 +153,7 @@ export const BaseItem: React.FC<IFormItemProps> = (props) => {
     wrapperWrap,
     tooltipLayout,
     tooltip,
+    tooltipIcon,
   } = formLayout
   const labelStyle = { ...formLayout.labelStyle }
   const wrapperStyle = { ...formLayout.wrapperStyle }
@@ -187,6 +193,7 @@ export const BaseItem: React.FC<IFormItemProps> = (props) => {
           </div>
         }
         visible={!!feedbackText}
+        getPopupContainer={getPopupContainer}
       >
         {children}
       </Popover>
@@ -195,10 +202,6 @@ export const BaseItem: React.FC<IFormItemProps> = (props) => {
     )
 
   const gridStyles: React.CSSProperties = {}
-
-  if (gridSpan) {
-    gridStyles.gridColumnStart = `span ${gridSpan}`
-  }
 
   const getOverflowTooltip = () => {
     if (overflow) {
@@ -214,10 +217,8 @@ export const BaseItem: React.FC<IFormItemProps> = (props) => {
 
   const renderLabelText = () => {
     const labelChildren = (
-      <div className={cls(`${prefixCls}-label-content`)} ref={containerRef}>
-        {asterisk && (
-          <span className={cls(`${prefixCls}-asterisk`)}>{'*'}</span>
-        )}
+      <div className={`${prefixCls}-label-content`} ref={containerRef}>
+        {asterisk && <span className={`${prefixCls}-asterisk`}>{'*'}</span>}
         <label ref={contentRef}>{label}</label>
       </div>
     )
@@ -239,9 +240,9 @@ export const BaseItem: React.FC<IFormItemProps> = (props) => {
   const renderTooltipIcon = () => {
     if (tooltip && tooltipLayout === 'icon' && !overflow) {
       return (
-        <span className={cls(`${prefixCls}-label-tooltip-icon`)}>
+        <span className={`${prefixCls}-label-tooltip-icon`}>
           <Tooltip placement="top" align={{ offset: [0, 2] }} title={tooltip}>
-            <QuestionCircleOutlined />
+            {tooltipIcon}
           </Tooltip>
         </span>
       )
@@ -263,7 +264,7 @@ export const BaseItem: React.FC<IFormItemProps> = (props) => {
         {renderLabelText()}
         {renderTooltipIcon()}
         {label !== ' ' && (
-          <span className={cls(`${prefixCls}-colon`)}>{colon ? ':' : ''}</span>
+          <span className={`${prefixCls}-colon`}>{colon ? ':' : ''}</span>
         )}
       </div>
     )
@@ -276,6 +277,7 @@ export const BaseItem: React.FC<IFormItemProps> = (props) => {
         ...style,
         ...gridStyles,
       }}
+      data-grid-span={props.gridSpan}
       className={cls({
         [`${prefixCls}`]: true,
         [`${prefixCls}-layout-${layout}`]: true,
@@ -297,12 +299,12 @@ export const BaseItem: React.FC<IFormItemProps> = (props) => {
       })}
       onFocus={() => {
         if (feedbackIcon || inset) {
-          setActice(true)
+          setActive(true)
         }
       }}
       onBlur={() => {
         if (feedbackIcon || inset) {
-          setActice(false)
+          setActive(false)
         }
       }}
     >
@@ -364,60 +366,50 @@ export const BaseItem: React.FC<IFormItemProps> = (props) => {
 // 适配
 export const FormItem: ComposeFormItem = connect(
   BaseItem,
-  mapProps(
-    { validateStatus: true, title: 'label', required: true },
-    (props, field) => {
-      if (isVoidField(field))
-        return {
-          extra: props.extra || field.description,
-        }
-      if (!field) return props
-      const takeMessage = () => {
-        const split = (messages: any[]) => {
-          return messages.reduce((buf, text, index) => {
-            if (!text) return buf
-            return index < messages.length - 1
-              ? buf.concat([text, ', '])
-              : buf.concat([text])
-          }, [])
-        }
-        if (field.validating) return
-        if (props.feedbackText) return props.feedbackText
-        if (field.errors.length) return split(field.errors)
-        if (field.warnings.length) return split(field.warnings)
-        if (field.successes.length) return split(field.successes)
-      }
-
+  mapProps((props, field) => {
+    if (isVoidField(field))
       return {
-        feedbackText: takeMessage(),
+        label: field.title || props.label,
+        asterisk: props.asterisk,
         extra: props.extra || field.description,
       }
-    },
-    (props, field) => {
-      if (isVoidField(field)) return props
-      if (!field) return props
-      return {
-        feedbackStatus:
-          field.validateStatus === 'validating'
-            ? 'pending'
-            : field.decorator[1]?.feedbackStatus || field.validateStatus,
+    if (!field) return props
+    const takeFeedbackStatus = () => {
+      if (field.validating) return 'pending'
+      return field.decoratorProps.feedbackStatus || field.validateStatus
+    }
+    const takeMessage = () => {
+      const split = (messages: any[]) => {
+        return messages.reduce((buf, text, index) => {
+          if (!text) return buf
+          return index < messages.length - 1
+            ? buf.concat([text, ', '])
+            : buf.concat([text])
+        }, [])
       }
-    },
-    (props, field) => {
-      if (isVoidField(field)) return props
-      if (!field) return props
-      let asterisk = false
+      if (field.validating) return
+      if (props.feedbackText) return props.feedbackText
+      if (field.selfErrors.length) return split(field.selfErrors)
+      if (field.selfWarnings.length) return split(field.selfWarnings)
+      if (field.selfSuccesses.length) return split(field.selfSuccesses)
+    }
+    const takeAsterisk = () => {
       if (field.required && field.pattern !== 'readPretty') {
-        asterisk = true
+        return true
       }
       if ('asterisk' in props) {
-        asterisk = props.asterisk
+        return props.asterisk
       }
-      return {
-        asterisk,
-      }
+      return false
     }
-  )
+    return {
+      label: props.label || field.title,
+      feedbackStatus: takeFeedbackStatus(),
+      feedbackText: takeMessage(),
+      asterisk: takeAsterisk(),
+      extra: props.extra || field.description,
+    }
+  })
 )
 
 FormItem.BaseItem = BaseItem

@@ -64,7 +64,7 @@ export default () => {
               x-component="ArrayTable.Column"
               x-component-props={{ width: 80, title: 'Index', align: 'center' }}
             >
-              <SchemaField.String
+              <SchemaField.Void
                 x-decorator="FormItem"
                 required
                 x-component="ArrayTable.Index"
@@ -533,7 +533,7 @@ const schema = {
             'x-component-props': { width: 100, title: '显隐->A2' },
             properties: {
               a1: {
-                type: 'string',
+                type: 'boolean',
                 'x-decorator': 'FormItem',
                 'x-component': 'Switch',
               },
@@ -730,6 +730,10 @@ export default () => {
 
 无属性
 
-### ArrayItems.useIndex
+### ArrayTable.useIndex
 
 > 读取当前渲染行索引的 React Hook
+
+### ArrayTable.useRecord
+
+> 读取当前渲染记录的 React Hook

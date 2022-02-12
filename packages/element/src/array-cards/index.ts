@@ -129,6 +129,7 @@ const ArrayCardsInner = observer(
                 key: getKey(item, index),
                 props: {
                   index,
+                  record: item,
                 },
               },
               {
@@ -143,8 +144,8 @@ const ArrayCardsInner = observer(
                       },
                     },
                     {
-                      default: () => [
-                        content,
+                      default: () => [content],
+                      header: () =>
                         h(
                           Row,
                           {
@@ -152,13 +153,11 @@ const ArrayCardsInner = observer(
                               type: 'flex',
                               justify: 'space-between',
                             },
-                            slot: 'header',
                           },
                           {
                             default: () => [title, extra],
                           }
                         ),
-                      ],
                     }
                   ),
               }
@@ -243,6 +242,7 @@ export const ArrayCards = composeExport(ArrayCardsInner, {
   MoveUp: ArrayBase.MoveUp,
   useArray: ArrayBase.useArray,
   useIndex: ArrayBase.useIndex,
+  useRecord: ArrayBase.useRecord,
 })
 
 export default ArrayCards

@@ -1,5 +1,4 @@
 import { observable, observe } from '../'
-//import { ProxyRaw, RawNode } from '../environment'
 
 test('deep observe', () => {
   const obs = observable<any>({
@@ -8,6 +7,7 @@ test('deep observe', () => {
         cc: [11, 22, 33],
       },
     },
+    ee: observable([]),
   })
   const handler = jest.fn()
   observe(obs, handler)
@@ -17,6 +17,14 @@ test('deep observe', () => {
   expect(handler).toHaveBeenCalledTimes(2)
   delete obs.aa
   expect(handler).toHaveBeenCalledTimes(3)
+
+  // Are these expected behaviors?
+  obs.ee.push(11)
+  expect(handler).toHaveBeenCalledTimes(3)
+  obs.ee = []
+  expect(handler).toHaveBeenCalledTimes(4)
+  obs.ee.push(11)
+  expect(handler).toHaveBeenCalledTimes(5)
 })
 
 test('shallow observe', () => {

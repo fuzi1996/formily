@@ -6,7 +6,7 @@ hero:
   desc: Alibaba Unified Form Solution
   actions:
     - text: Home Site
-      link: //v2.formilyjs.org
+      link: //formilyjs.org
     - text: Document
       link: /guide
 features:
@@ -104,7 +104,7 @@ const FormItem = observer(({ children }) => {
       <div style={{ height: 20 }}>{field.title}:</div>
       {children}
       <div style={{ height: 20, fontSize: 12, color: 'red' }}>
-        {field.errors.join(',')}
+        {field.selfErrors.join(',')}
       </div>
     </div>
   )
@@ -167,9 +167,9 @@ export default () => {
       field.value &&
       form.values[equalName] !== field.value
     ) {
-      field.errors = ['Password does not match Confirm Password.']
+      field.selfErrors = ['Password does not match Confirm Password.']
     } else {
-      field.errors = []
+      field.selfErrors = []
     }
   }
 

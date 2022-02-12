@@ -2,7 +2,7 @@ import { resolve } from 'path'
 export default {
   mode: 'site',
   logo: '//img.alicdn.com/imgextra/i2/O1CN01Kq3OHU1fph6LGqjIz_!!6000000004056-55-tps-1141-150.svg',
-  title: 'Formily',
+  title: 'Reactive',
   hash: true,
   favicon:
     '//img.alicdn.com/imgextra/i3/O1CN01XtT3Tv1Wd1b5hNVKy_!!6000000002810-55-tps-360-360.svg',
@@ -19,7 +19,7 @@ export default {
       },
       {
         title: 'Home Site',
-        path: 'https://v2.formilyjs.org',
+        path: 'https://formilyjs.org',
       },
       {
         title: 'GITHUB',
@@ -37,7 +37,7 @@ export default {
       },
       {
         title: '主站',
-        path: 'https://v2.formilyjs.org',
+        path: 'https://formilyjs.org',
       },
       {
         title: 'GITHUB',
@@ -47,10 +47,13 @@ export default {
   },
   styles: [
     `.__dumi-default-navbar-logo{
-      height: 60px !important;
-      width: 150px !important;
-      padding-left:0 !important;
-      color: transparent !important;
+      background-size: 140px!important;
+      background-position: center left!important;
+      background-repeat: no-repeat!important;
+      padding-left: 150px!important;/*可根据title的宽度调整*/
+      font-size: 22px!important;
+      color: #000!important;
+      font-weight: lighter!important;
     }
     .__dumi-default-navbar{
       padding: 0 28px !important;
@@ -142,6 +145,10 @@ export default {
           {
             title: 'untracked',
             path: '/api/untracked',
+          },
+          {
+            title: 'hasCollected',
+            path: '/api/has-collected',
           },
           {
             title: 'Tracker',
@@ -239,6 +246,10 @@ export default {
           {
             title: 'untracked',
             path: '/zh-CN/api/untracked',
+          },
+          {
+            title: 'hasCollected',
+            path: '/zh-CN/api/has-collected',
           },
           {
             title: 'Tracker',

@@ -644,7 +644,8 @@ describe('recursion field', () => {
       </FormProvider>`,
     } as any
     const wrapper = mount(TestComponent, {
-      attachTo: div,
+      // attachTo: div,
+      attachToDocument: true,
       localVue,
     })
     expect(wrapper.find('.bbb').exists()).toBeFalsy()
@@ -658,5 +659,35 @@ describe('recursion field', () => {
     await wrapper.vm.$forceUpdate()
     expect(wrapper.find('.ccc').exists()).toBeTruthy()
     wrapper.destroy()
+  })
+
+  test('void field children', () => {
+    const form = createForm()
+    const VoidComponent = {
+      render(h: CreateElement) {
+        return h('div', this.$slots.default || 'placeholder')
+      },
+    }
+    const { SchemaField, SchemaVoidField } = createSchemaField({
+      components: {
+        VoidComponent,
+      },
+    })
+    const { queryByTestId } = render({
+      components: { SchemaField, SchemaVoidField },
+      data() {
+        return {
+          form,
+        }
+      },
+      template: `<FormProvider :form="form">
+        <SchemaField>
+          <SchemaVoidField x-component="VoidComponent" :x-component-props="{ 'data-testid': 'void-component-1' }" />
+          <SchemaVoidField x-component="VoidComponent" :x-component-props="{ 'data-testid': 'void-component-2' }" x-content="content" />
+        </SchemaField>
+      </FormProvider>`,
+    })
+    expect(queryByTestId('void-component-1').textContent).toBe('placeholder')
+    expect(queryByTestId('void-component-2').textContent).toBe('content')
   })
 })

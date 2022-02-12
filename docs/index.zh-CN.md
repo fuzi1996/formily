@@ -83,7 +83,7 @@ export default () => (
     titleStyle={{ paddingBottom: 100 }}
   >
     <a href="//core.formilyjs.org" target="_blank" rel="noreferrer">
-      <img src="//img.alicdn.com/imgextra/i4/O1CN01XebYW51E96eP1AcwZ_!!6000000000308-55-tps-1939-1199.svg" />
+      <img src="//img.alicdn.com/imgextra/i3/O1CN01iEwHrP1NUw84xTded_!!6000000001574-55-tps-1939-1199.svg" />
     </a>
   </Section>
 )
@@ -125,7 +125,7 @@ export default () => (
     titleStyle={{ paddingBottom: 140 }}
   >
     <QrCodeGroup>
-      <QrCode link="//img.alicdn.com/imgextra/i2/O1CN010HJI5V1nFWmwSvj1q_!!6000000005060-0-tps-1284-1644.jpg" />
+      <QrCode link="//img.alicdn.com/imgextra/i2/O1CN01n7kuJW1nrXhBw3Nud_!!6000000005143-0-tps-1284-1644.jpg" />
       <QrCode
         title="该群已满"
         link="//img.alicdn.com/imgextra/i3/O1CN018neaqX1HvbT6SUIbp_!!6000000000820-0-tps-1284-1644.jpg"

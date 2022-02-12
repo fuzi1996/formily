@@ -1,4 +1,4 @@
-import { observable, batch, autorun } from '..'
+import { observable, batch, autorun, reaction } from '..'
 import { define } from '../model'
 
 describe('normal batch', () => {
@@ -35,6 +35,7 @@ describe('normal batch', () => {
     obs.aa.bb = 111
     obs.aa.bb = 222
     expect(handler).toBeCalledTimes(3)
+    expect(handler).lastCalledWith(222)
     batch(() => {
       obs.aa.bb = 333
       obs.aa.bb = 444
@@ -42,6 +43,7 @@ describe('normal batch', () => {
     batch(() => {})
     batch()
     expect(handler).toBeCalledTimes(4)
+    expect(handler).lastCalledWith(444)
   })
 
   test('batch track', () => {
@@ -84,9 +86,11 @@ describe('normal batch', () => {
     obs.aa.bb = 111
     obs.aa.bb = 222
     expect(handler).toBeCalledTimes(3)
+    expect(handler).lastCalledWith(222)
     setData()
     batch(() => {})
     expect(handler).toBeCalledTimes(4)
+    expect(handler).lastCalledWith(444)
   })
 
   test('batch.bound track', () => {
@@ -133,6 +137,10 @@ describe('normal batch', () => {
     })
 
     expect(handler).toBeCalledTimes(4)
+    expect(handler).nthCalledWith(1, undefined, undefined, undefined, undefined)
+    expect(handler).nthCalledWith(2, 123, undefined, undefined, undefined)
+    expect(handler).nthCalledWith(3, 123, undefined, 'ccccc', undefined)
+    expect(handler).nthCalledWith(4, 123, 321, 'ccccc', 'ddddd')
   })
 
   test('batch.scope bound', () => {
@@ -157,6 +165,10 @@ describe('normal batch', () => {
     })
 
     expect(handler).toBeCalledTimes(4)
+    expect(handler).nthCalledWith(1, undefined, undefined, undefined, undefined)
+    expect(handler).nthCalledWith(2, 123, undefined, undefined, undefined)
+    expect(handler).nthCalledWith(3, 123, undefined, 'ccccc', undefined)
+    expect(handler).nthCalledWith(4, 123, 321, 'ccccc', 'ddddd')
   })
 
   test('batch.scope track', () => {
@@ -204,6 +216,18 @@ describe('normal batch', () => {
     expect(handler).toBeCalledTimes(2)
     expect(obs.cc).toEqual(41)
   })
+
+  test('batch error', () => {
+    let error = null
+    try {
+      batch(() => {
+        throw '123'
+      })
+    } catch (e) {
+      error = e
+    }
+    expect(error).toEqual('123')
+  })
 })
 
 describe('annotation batch', () => {
@@ -230,8 +254,10 @@ describe('annotation batch', () => {
     obs.aa.bb = 111
     obs.aa.bb = 222
     expect(handler).toBeCalledTimes(3)
+    expect(handler).lastCalledWith(222)
     obs.setData()
     expect(handler).toBeCalledTimes(4)
+    expect(handler).lastCalledWith(444)
   })
 
   test('batch track', () => {
@@ -287,8 +313,10 @@ describe('annotation batch', () => {
     obs.aa.bb = 111
     obs.aa.bb = 222
     expect(handler).toBeCalledTimes(3)
+    expect(handler).lastCalledWith(222)
     obs.setData()
     expect(handler).toBeCalledTimes(4)
+    expect(handler).lastCalledWith(444)
   })
 
   test('batch.bound track', () => {
@@ -359,6 +387,10 @@ describe('annotation batch', () => {
     })
 
     expect(handler).toBeCalledTimes(4)
+    expect(handler).nthCalledWith(1, null, null, null, null)
+    expect(handler).nthCalledWith(2, 123, null, null, null)
+    expect(handler).nthCalledWith(3, 123, null, 'ccccc', null)
+    expect(handler).nthCalledWith(4, 123, 321, 'ccccc', 'ddddd')
   })
 
   test('batch.scope bound', () => {
@@ -399,6 +431,10 @@ describe('annotation batch', () => {
     })
 
     expect(handler).toBeCalledTimes(4)
+    expect(handler).nthCalledWith(1, null, null, null, null)
+    expect(handler).nthCalledWith(2, 123, null, null, null)
+    expect(handler).nthCalledWith(3, 123, null, 'ccccc', null)
+    expect(handler).nthCalledWith(4, 123, 321, 'ccccc', 'ddddd')
   })
 
   test('batch.scope track', () => {
@@ -462,4 +498,95 @@ describe('annotation batch', () => {
     expect(handler).toBeCalledTimes(2)
     expect(obs.cc).toEqual(41)
   })
+})
+
+describe('batch endpoint', () => {
+  test('normal endpoint', () => {
+    const tokens = []
+    const inner = batch.bound(() => {
+      batch.endpoint(() => {
+        tokens.push('endpoint')
+      })
+      tokens.push('inner')
+    })
+    const wrapper = batch.bound(() => {
+      inner()
+      tokens.push('wrapper')
+    })
+    wrapper()
+    expect(tokens).toEqual(['inner', 'wrapper', 'endpoint'])
+  })
+
+  test('unexpect endpoint', () => {
+    const tokens = []
+    const inner = batch.bound(() => {
+      batch.endpoint()
+      tokens.push('inner')
+    })
+    const wrapper = batch.bound(() => {
+      inner()
+      tokens.push('wrapper')
+    })
+    wrapper()
+    expect(tokens).toEqual(['inner', 'wrapper'])
+  })
+
+  test('no wrapper endpoint', () => {
+    const tokens = []
+    batch.endpoint(() => {
+      tokens.push('endpoint')
+    })
+    expect(tokens).toEqual(['endpoint'])
+  })
+})
+
+test('reaction collect in batch valid', () => {
+  const obs = observable({
+    aa: 11,
+    bb: 22,
+    cc: 33,
+  })
+  reaction(
+    () => obs.aa,
+    () => {
+      void obs.cc
+    }
+  )
+  const fn = jest.fn()
+
+  autorun(() => {
+    batch.scope(() => {
+      obs.aa = obs.bb
+    })
+    fn()
+  })
+
+  obs.bb = 44
+  expect(fn).toBeCalledTimes(2)
+})
+
+test('reaction collect in batch invalid', () => {
+  const obs = observable({
+    aa: 11,
+    bb: 22,
+    cc: 33,
+  })
+  reaction(
+    () => obs.aa,
+    () => {
+      void obs.cc
+    }
+  )
+  const fn = jest.fn()
+
+  autorun(() => {
+    batch.scope(() => {
+      obs.aa = obs.bb
+    })
+    fn()
+  })
+
+  obs.bb = 44
+  obs.cc = 55
+  expect(fn).toBeCalledTimes(3)
 })

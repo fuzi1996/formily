@@ -19,7 +19,7 @@ export interface IArrayItemsItemProps {
 const ArrayItemsInner = observer(
   defineComponent({
     name: 'FArrayItems',
-    setup(props, { attrs }) {
+    setup() {
       const fieldRef = useField<ArrayField>()
       const schemaRef = useFieldSchema()
 
@@ -43,6 +43,7 @@ const ArrayItemsInner = observer(
                 key,
                 props: {
                   index,
+                  record: item,
                 },
               },
               {
@@ -127,7 +128,6 @@ const ArrayItemsInner = observer(
                 'div',
                 {
                   class: [prefixCls],
-                  attrs,
                   on: {
                     change: () => {},
                   },
@@ -154,7 +154,9 @@ const ArrayItemsItem = defineComponent<IArrayItemsItemProps>({
         'div',
         {
           class: [`${prefixCls}-${props.type || 'card'}`],
-          attrs,
+          attrs: {
+            ...attrs,
+          },
           on: {
             change: () => {},
           },
@@ -174,6 +176,7 @@ export const ArrayItems = composeExport(ArrayItemsInner, {
   MoveUp: ArrayBase.MoveUp,
   useArray: ArrayBase.useArray,
   useIndex: ArrayBase.useIndex,
+  useRecord: ArrayBase.useRecord,
 })
 
 export default ArrayItems

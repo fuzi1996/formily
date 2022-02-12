@@ -5,10 +5,11 @@ import {
   Ref,
   onBeforeUnmount,
   watch,
+  provide,
 } from '@vue/composition-api'
 import { isVoidField } from '@formily/core'
 import { connect, mapProps, h } from '@formily/vue'
-import { useFormLayout } from '../form-layout'
+import { useFormLayout, FormLayoutShallowContext } from '../form-layout'
 import { composeExport, resolveComponent } from '../__builtins__/shared'
 import { stylePrefix } from '../__builtins__/configs'
 import { Component } from 'vue'
@@ -63,7 +64,7 @@ const useOverflow = (containerRef: Ref<HTMLElement>) => {
     const container = containerRef.value
     const content = container.querySelector('label')
     const containerWidth = container.getBoundingClientRect().width
-    const contentWidth = content.getBoundingClientRect().width
+    const contentWidth = content?.getBoundingClientRect().width
 
     if (containerWidth !== 0) {
       if (contentWidth > containerWidth) {
@@ -107,17 +108,17 @@ export const FormBaseItem = defineComponent<FormItemProps>({
     className: {},
     required: {},
     label: {},
-    colon: { default: true },
+    colon: {},
     layout: {},
     tooltip: {},
     labelStyle: {},
     labelAlign: {},
-    labelWrap: { default: false },
+    labelWrap: {},
     labelWidth: {},
     wrapperWidth: {},
     labelCol: {},
     wrapperCol: {},
-    wrapperAlign: { default: 'left' },
+    wrapperAlign: {},
     wrapperWrap: {},
     wrapperStyle: {},
     fullness: {},
@@ -135,9 +136,9 @@ export const FormBaseItem = defineComponent<FormItemProps>({
     bordered: { default: true },
     inset: { default: false },
   },
-  setup(props, { slots, attrs, refs }) {
+  setup(props, { slots, refs }) {
     const active = ref(false)
-    const deepLayout = useFormLayout()
+    const deepLayoutRef = useFormLayout()
 
     const prefixCls = `${stylePrefix}-form-item`
 
@@ -148,19 +149,24 @@ export const FormBaseItem = defineComponent<FormItemProps>({
       containerRef.value = refs.labelContainer
     })
 
+    provide(FormLayoutShallowContext, ref(null))
+
     return () => {
+      const gridStyles: Record<string, any> = {}
+
+      const deepLayout = deepLayoutRef.value
       const {
         label,
-        colon,
+        colon = deepLayout.colon ?? true,
         layout = deepLayout.layout ?? 'horizontal',
         tooltip,
         labelStyle = {},
-        labelWrap = deepLayout.labelWrap,
+        labelWrap = deepLayout.labelWrap ?? false,
         labelWidth = deepLayout.labelWidth,
         wrapperWidth = deepLayout.wrapperWidth,
         labelCol = deepLayout.labelCol,
         wrapperCol = deepLayout.wrapperCol,
-        wrapperAlign = deepLayout.wrapperAlign,
+        wrapperAlign = deepLayout.wrapperAlign ?? 'left',
         wrapperWrap = deepLayout.wrapperWrap,
         wrapperStyle = {},
         fullness = deepLayout.fullness,
@@ -267,13 +273,11 @@ export const FormBaseItem = defineComponent<FormItemProps>({
               },
             },
             {
-              default: () => [
-                labelChildren,
+              default: () => [labelChildren],
+              content: () =>
                 h(
                   'div',
-                  {
-                    slot: 'content',
-                  },
+                  {},
                   {
                     default: () => [
                       overflow.value && resolveComponent(label),
@@ -281,7 +285,6 @@ export const FormBaseItem = defineComponent<FormItemProps>({
                     ],
                   }
                 ),
-              ],
             }
           )
         } else {
@@ -305,19 +308,17 @@ export const FormBaseItem = defineComponent<FormItemProps>({
                     },
                   },
                   {
-                    default: () => [
-                      h('i', { class: 'el-icon-info' }, {}),
+                    default: () => [h('i', { class: 'el-icon-info' }, {})],
+                    content: () =>
                       h(
                         'div',
                         {
                           class: `${prefixCls}-label-tooltip-content`,
-                          slot: 'content',
                         },
                         {
                           default: () => [resolveComponent(tooltip)],
                         }
                       ),
-                    ],
                   }
                 ),
               ],
@@ -447,7 +448,12 @@ export const FormBaseItem = defineComponent<FormItemProps>({
       return h(
         'div',
         {
-          style: attrs.style as string | undefined,
+          style: {
+            ...gridStyles,
+          },
+          attrs: {
+            'data-grid-span': props.gridSpan,
+          },
           class: {
             [`${prefixCls}`]: true,
             [`${prefixCls}-layout-${layout}`]: true,
@@ -469,12 +475,12 @@ export const FormBaseItem = defineComponent<FormItemProps>({
             [`${props.className}`]: !!props.className,
           },
           on: {
-            '!focus': () => {
+            focus: () => {
               if (feedbackIcon || inset) {
                 active.value = true
               }
             },
-            '!blur': () => {
+            blur: () => {
               if (feedbackIcon || inset) {
                 active.value = false
               }
@@ -507,9 +513,9 @@ const Item = connect(
         }
         if (field.validating) return
         if (props.feedbackText) return props.feedbackText
-        if (field.errors.length) return split(field.errors)
-        if (field.warnings.length) return split(field.warnings)
-        if (field.successes.length) return split(field.successes)
+        if (field.selfErrors.length) return split(field.selfErrors)
+        if (field.selfWarnings.length) return split(field.selfWarnings)
+        if (field.selfSuccesses.length) return split(field.selfSuccesses)
       }
       const errorMessages = takeMessage()
       return {

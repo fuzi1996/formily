@@ -1,7 +1,7 @@
 import { autorun, batch } from '@formily/reactive'
 import { Form } from '../models'
 import { LifeCycleTypes } from '../types'
-import { createEffectHook } from '../shared/effectbox'
+import { createEffectHook } from '../shared/effective'
 
 function createFormEffect(type: LifeCycleTypes) {
   return createEffectHook(
@@ -64,6 +64,10 @@ export const onFormValidateFailed = createFormEffect(
 export const onFormValidateEnd = createFormEffect(
   LifeCycleTypes.ON_FORM_VALIDATE_END
 )
+export const onFormGraphChange = createFormEffect(
+  LifeCycleTypes.ON_FORM_GRAPH_CHANGE
+)
+export const onFormLoading = createFormEffect(LifeCycleTypes.ON_FORM_LOADING)
 export function onFormReact(callback?: (form: Form) => void) {
   let dispose = null
   onFormInit((form) => {

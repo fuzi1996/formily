@@ -295,14 +295,9 @@ export function FormDrawer(
                           },
                         }
                       ),
-                      h(
-                        'div',
-                        {
-                          slot: 'title',
-                        },
-                        { default: () => resolveComponent(title) }
-                      ),
                     ],
+                    title: () =>
+                      h('div', {}, { default: () => resolveComponent(title) }),
                   }
                 ),
             }
@@ -340,7 +335,7 @@ export function FormDrawer(
       }
       return formDrawer
     },
-    open: (props: Formily.Core.Types.IFormProps) => {
+    open: (props: IFormProps) => {
       if (env.promise) return env.promise
 
       env.promise = new Promise(async (resolve, reject) => {
@@ -408,9 +403,7 @@ const FormDrawerFooter = defineComponent({
             to: PORTAL_TARGET_NAME,
           },
         },
-        {
-          default: () => h(Fragment, {}, slots),
-        }
+        slots
       )
     }
   },

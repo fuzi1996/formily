@@ -2,6 +2,7 @@ import React from 'react'
 import { Box } from '@alifd/next'
 import { isNumberLike } from '@formily/shared'
 import { toArray, usePrefixCls } from '../__builtins__'
+import { useFormLayout } from '../form-layout'
 export interface ISpaceProps {
   prefix?: string
   className?: string
@@ -25,8 +26,9 @@ export const Space: React.FC<ISpaceProps> = ({
   align,
   ...props
 }) => {
+  const layout = useFormLayout()
   const prefix = usePrefixCls('space', props)
-  const getDireaction = () => {
+  const getDirection = () => {
     if (direction === 'horizontal') {
       return 'row'
     } else {
@@ -42,17 +44,19 @@ export const Space: React.FC<ISpaceProps> = ({
       return 'center'
     }
   }
+  const _size = size ?? layout?.spaceGap ?? 8
+  const _align = getAlign()
   return (
     <Box
       {...props}
-      spacing={isNumberLike(size) ? size : spaceSize[size] || 8}
+      spacing={isNumberLike(_size) ? _size : spaceSize[_size] || 8}
       style={{
-        alignItems: 'center',
+        alignItems: _align,
         display: 'inline-flex',
         ...props.style,
       }}
-      align={getAlign()}
-      direction={getDireaction()}
+      align={_align}
+      direction={getDirection()}
     >
       {toArray(props.children, { keepEmpty: true }).map((child, index) => (
         <div className={`${prefix}-item`} key={index}>
@@ -66,7 +70,6 @@ export const Space: React.FC<ISpaceProps> = ({
 Space.defaultProps = {
   direction: 'horizontal',
   align: 'start',
-  size: 8,
 }
 
 export default Space

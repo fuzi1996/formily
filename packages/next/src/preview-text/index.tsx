@@ -24,6 +24,56 @@ const usePlaceholder = (value?: any) => {
   return !isEmpty(value) ? value : placeholder
 }
 
+interface IGetValueByValue {
+  (
+    array: any[],
+    inputValue: any,
+    keyMap?: { inputKey?: string; outputKey?: string; childrenKey?: string },
+    path?: any[]
+  ): any
+}
+const getValueByValue: IGetValueByValue = (
+  array,
+  inputValue,
+  keyMap,
+  path = []
+) => {
+  const {
+    inputKey = 'value',
+    outputKey = 'label',
+    childrenKey = 'children',
+  } = keyMap || {}
+  let outputValue: any
+  if (isArr(array)) {
+    if (isArr(inputValue)) {
+      outputValue = inputValue.map((v) =>
+        getValueByValue(array, v, keyMap, path)
+      )
+    } else {
+      array.forEach((obj) => {
+        if (outputValue === undefined) {
+          const currentPath = [...path, obj?.[outputKey]]
+          if (obj?.[inputKey] === inputValue) {
+            outputValue = {
+              leaf: obj?.[outputKey],
+              whole: currentPath,
+            }
+          } else if (obj?.[childrenKey]?.length) {
+            outputValue = getValueByValue(
+              obj?.[childrenKey],
+              inputValue,
+              keyMap,
+              currentPath
+            )
+          }
+        }
+      })
+    }
+    return outputValue
+  }
+  return undefined
+}
+
 const Input: React.FC<InputProps> = (props) => {
   const prefixCls = usePrefixCls('form-text', props)
   return (
@@ -65,24 +115,27 @@ const Select: React.FC<SelectProps> = observer((props) => {
     }
   }
 
+  const getLabel = (target: any) => {
+    return (
+      dataSource?.find((item) => item.value == target?.value)?.label ||
+      target.label ||
+      placeholder
+    )
+  }
+
   const getLabels = () => {
     const selected = getSelected()
-    if (!selected.length)
-      return (
-        <Tag type="primary" size="small">
-          {placeholder}
-        </Tag>
-      )
-    return selected.map(({ value, label }, key) => {
-      const text =
-        dataSource?.find((item) => item.value == value)?.label || label
+    if (!selected.length) return placeholder
+    if (selected.length === 1) return getLabel(selected[0])
+    return selected.map((item, key) => {
       return (
         <Tag type="primary" size="small" key={key}>
-          {text || placeholder}
+          {getLabel(item)}
         </Tag>
       )
     })
   }
+
   return <div className={cls(prefixCls, props.className)}>{getLabels()}</div>
 })
 
@@ -159,13 +212,11 @@ const Cascader: React.FC<CascaderProps> = observer((props) => {
   }
   const getLabels = () => {
     const selected = getSelected()
-    return selected
-      .map((value) => {
-        return (
-          dataSource?.find((item) => item.value == value)?.label || placeholder
-        )
-      })
-      .join('/')
+    const labels = getValueByValue(dataSource, selected)
+      ?.filter((item) => isValid(item))
+      ?.map((item) => item?.whole.join('/'))
+      .join(', ')
+    return labels || placeholder
   }
   return <div className={cls(prefixCls, props.className)}>{getLabels()}</div>
 })

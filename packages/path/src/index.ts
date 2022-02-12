@@ -8,14 +8,16 @@ import {
   existInByDestructor,
 } from './destructor'
 import { Segments, Node, Pattern } from './types'
-import { LRUMap } from './lru'
 import { Matcher } from './matcher'
 
-const pathCache = new LRUMap(10000)
+const pathCache = new Map()
 
 const isMatcher = Symbol('PATH_MATCHER')
 
 const isValid = (val: any) => val !== undefined && val !== null
+
+const isAssignable = (val: any) =>
+  typeof val === 'object' || typeof val === 'function'
 
 const isNumberIndex = (val: any) =>
   isStr(val) ? /^\d+$/.test(val) : isNum(val)
@@ -45,12 +47,12 @@ const setIn = (segments: Segments, source: any, value: any) => {
     const index = segments[i]
     const rules = getDestructor(index as string)
     if (!rules) {
-      if (!isValid(source)) return
+      if (!isValid(source) || !isAssignable(source)) return
       if (isArr(source) && !isNumberIndex(index)) {
         return
       }
       if (!isValid(source[index])) {
-        if (!isValid(value)) {
+        if (value === undefined) {
           return
         }
         if (i < segments.length - 1) {
@@ -78,7 +80,7 @@ const deleteIn = (segments: Segments, source: any) => {
         return
       }
 
-      if (!isValid(source)) return
+      if (!isValid(source) || !isAssignable(source)) return
       source = source[index]
       if (!isObj(source)) {
         return
@@ -108,7 +110,7 @@ const existIn = (segments: Segments, source: any, start: number | Path) => {
         return hasOwnProperty.call(source, index)
       }
 
-      if (!isValid(source)) return false
+      if (!isValid(source) || !isAssignable(source)) return false
       source = source[index]
 
       if (!isObj(source)) {
@@ -248,8 +250,8 @@ export class Path {
     this.isRegExp = isRegExp
     this.haveExcludePattern = haveExcludePattern
     this.tree = tree as Node
-    this.matchCache = new LRUMap(200)
-    this.includesCache = new LRUMap(200)
+    this.matchCache = new Map()
+    this.includesCache = new Map()
   }
 
   toString() {

@@ -1,28 +1,15 @@
 import {
-  FormPath,
   isValid,
-  isArr,
-  FormPathPattern,
-  isBool,
-  each,
-  isFn,
   isEmpty,
   toArr,
+  FormPathPattern,
+  isArr,
 } from '@formily/shared'
 import {
   ValidatorTriggerType,
   parseValidatorDescriptions,
 } from '@formily/validator'
-import {
-  define,
-  observable,
-  reaction,
-  batch,
-  toJS,
-  autorun,
-  action,
-} from '@formily/reactive'
-import { Form } from './Form'
+import { define, observable, batch, toJS, action } from '@formily/reactive'
 import {
   JSXComponent,
   LifeCycleTypes,
@@ -30,11 +17,7 @@ import {
   FeedbackMessage,
   IFieldCaches,
   IFieldRequests,
-  FieldDisplayTypes,
-  FieldPatternTypes,
   FieldValidator,
-  FieldDecorator,
-  FieldComponent,
   FieldDataSource,
   ISearchFeedback,
   IFieldProps,
@@ -44,60 +27,56 @@ import {
   IModelGetter,
 } from '../types'
 import {
-  buildNodeIndexes,
-  validateToFeedbacks,
-  initFieldUpdate,
   updateFeedback,
   queryFeedbacks,
+  allowAssignDefaultValue,
   queryFeedbackMessages,
   getValuesFromEvent,
-  modelStateSetter,
-  modelStateGetter,
+  createReactions,
+  createStateSetter,
+  createStateGetter,
   isHTMLInputEvent,
-  initFieldValue,
+  setValidatorRule,
+  batchValidate,
+  batchSubmit,
+  batchReset,
+  setValidating,
+  setSubmitting,
+  setLoading,
+  validateSelf,
+  modifySelf,
+  getValidFieldDefaultValue,
+  initializeStart,
+  initializeEnd,
+  createChildrenFeedbackFilter,
+  createReaction,
 } from '../shared/internals'
-import { isArrayField, isObjectField } from '../shared/checkers'
-import { Query } from './Query'
-
-const RESPONSE_REQUEST_DURATION = 100
-
+import { Form } from './Form'
+import { BaseField } from './BaseField'
 export class Field<
   Decorator extends JSXComponent = any,
   Component extends JSXComponent = any,
   TextType = any,
   ValueType = any
-> {
+> extends BaseField<Decorator, Component, TextType> {
   displayName = 'Field'
-  title: TextType
-  description: TextType
-  selfDisplay: FieldDisplayTypes
-  selfPattern: FieldPatternTypes
-  loading: boolean
-  validating: boolean
-  modified: boolean
-  active: boolean
-  visited: boolean
-  inputValue: ValueType
-  inputValues: any[]
-  initialized: boolean
-  dataSource: FieldDataSource
-  mounted: boolean
-  unmounted: boolean
-  validator: FieldValidator
-  decoratorType: Decorator
-  decoratorProps: Record<string, any>
-  componentType: Component
-  componentProps: Record<string, any>
-  feedbacks: IFieldFeedback[]
-  address: FormPath
-  path: FormPath
 
-  form: Form
   props: IFieldProps<Decorator, Component, TextType, ValueType>
 
-  protected caches: IFieldCaches = {}
-  protected requests: IFieldRequests = {}
-  protected disposers: (() => void)[] = []
+  loading: boolean
+  validating: boolean
+  submitting: boolean
+  active: boolean
+  visited: boolean
+  selfModified: boolean
+  modified: boolean
+  inputValue: ValueType
+  inputValues: any[]
+  dataSource: FieldDataSource
+  validator: FieldValidator
+  feedbacks: IFieldFeedback[]
+  caches: IFieldCaches = {}
+  requests: IFieldRequests = {}
 
   constructor(
     address: FormPathPattern,
@@ -105,27 +84,25 @@ export class Field<
     form: Form,
     designable: boolean
   ) {
-    this.initialize(props, form)
-    this.makeIndexes(address)
-    this.makeObservable(designable)
-    this.makeReactive(designable)
-    this.onInit(designable)
-  }
-
-  protected makeIndexes(address: FormPathPattern) {
-    buildNodeIndexes(this, address)
-  }
-
-  protected initialize(
-    props: IFieldProps<Decorator, Component, TextType, ValueType>,
-    form: Form
-  ) {
+    super()
     this.form = form
     this.props = props
+    this.designable = designable
+    initializeStart()
+    this.locate(address)
+    this.initialize()
+    this.makeObservable()
+    this.makeReactive()
+    this.onInit()
+    initializeEnd()
+  }
+
+  protected initialize() {
     this.initialized = false
     this.loading = false
     this.validating = false
-    this.modified = false
+    this.submitting = false
+    this.selfModified = false
     this.active = false
     this.visited = false
     this.mounted = false
@@ -133,8 +110,8 @@ export class Field<
     this.inputValues = []
     this.inputValue = null
     this.feedbacks = []
-    this.title = props.title
-    this.description = props.description
+    this.title = this.props.title
+    this.description = this.props.description
     this.display = this.props.display
     this.pattern = this.props.pattern
     this.editable = this.props.editable
@@ -146,13 +123,21 @@ export class Field<
     this.dataSource = this.props.dataSource
     this.validator = this.props.validator
     this.required = this.props.required
+    this.content = this.props.content
+    this.value = getValidFieldDefaultValue(
+      this.props.value,
+      this.props.initialValue
+    )
+    this.initialValue = this.props.initialValue
+    this.data = this.props.data
     this.decorator = toArr(this.props.decorator)
     this.component = toArr(this.props.component)
   }
 
-  protected makeObservable(designable: boolean) {
-    if (designable) return
+  protected makeObservable() {
+    if (this.designable) return
     define(this, {
+      path: observable.ref,
       title: observable.ref,
       description: observable.ref,
       dataSource: observable.ref,
@@ -160,6 +145,8 @@ export class Field<
       selfPattern: observable.ref,
       loading: observable.ref,
       validating: observable.ref,
+      submitting: observable.ref,
+      selfModified: observable.ref,
       modified: observable.ref,
       active: observable.ref,
       visited: observable.ref,
@@ -170,10 +157,12 @@ export class Field<
       inputValues: observable.ref,
       decoratorType: observable.ref,
       componentType: observable.ref,
+      content: observable.ref,
       decoratorProps: observable,
       componentProps: observable,
       validator: observable.shallow,
       feedbacks: observable.shallow,
+      data: observable.shallow,
       component: observable.computed,
       decorator: observable.computed,
       errors: observable.computed,
@@ -181,6 +170,11 @@ export class Field<
       successes: observable.computed,
       valid: observable.computed,
       invalid: observable.computed,
+      selfErrors: observable.computed,
+      selfWarnings: observable.computed,
+      selfSuccesses: observable.computed,
+      selfValid: observable.computed,
+      selfInvalid: observable.computed,
       validateStatus: observable.computed,
       value: observable.computed,
       initialValue: observable.computed,
@@ -193,6 +187,7 @@ export class Field<
       readOnly: observable.computed,
       readPretty: observable.computed,
       editable: observable.computed,
+      indexes: observable.computed,
       setDisplay: action,
       setTitle: action,
       setDescription: action,
@@ -203,15 +198,17 @@ export class Field<
       setLoading: action,
       setValidating: action,
       setFeedback: action,
-      setErrors: action,
-      setWarnings: action,
-      setSuccesses: action,
+      setSelfErrors: action,
+      setSelfWarnings: action,
+      setSelfSuccesses: action,
       setValidator: action,
       setRequired: action,
       setComponent: action,
       setComponentProps: action,
       setDecorator: action,
       setDecoratorProps: action,
+      setData: action,
+      setContent: action,
       validate: action,
       reset: action,
       onInit: batch,
@@ -223,34 +220,35 @@ export class Field<
     })
   }
 
-  protected makeReactive(designable: boolean) {
-    if (designable) return
+  protected makeReactive() {
+    if (this.designable) return
     this.disposers.push(
-      reaction(
+      createReaction(
         () => this.value,
         (value) => {
-          this.form.notify(LifeCycleTypes.ON_FIELD_VALUE_CHANGE, this)
-          if (isValid(value) && this.modified && !this.caches.inputting) {
-            this.validate()
+          this.notify(LifeCycleTypes.ON_FIELD_VALUE_CHANGE)
+          if (isValid(value) && this.selfModified && !this.caches.inputting) {
+            validateSelf(this)
           }
         }
       ),
-      reaction(
+      createReaction(
         () => this.initialValue,
         () => {
-          this.form.notify(LifeCycleTypes.ON_FIELD_INITIAL_VALUE_CHANGE, this)
+          this.notify(LifeCycleTypes.ON_FIELD_INITIAL_VALUE_CHANGE)
         }
       ),
-      reaction(
+      createReaction(
         () => this.display,
         (display) => {
+          const value = this.value
           if (display === 'visible') {
-            if (isEmpty(this.value)) {
+            if (isEmpty(value)) {
               this.setValue(this.caches.value)
               this.caches.value = undefined
             }
           } else {
-            this.caches.value = toJS(this.value)
+            this.caches.value = toJS(value) ?? toJS(this.initialValue)
             if (display === 'none') {
               this.form.deleteValuesIn(this.path)
             }
@@ -263,7 +261,7 @@ export class Field<
           }
         }
       ),
-      reaction(
+      createReaction(
         () => this.pattern,
         (pattern) => {
           if (pattern !== 'editable') {
@@ -275,68 +273,49 @@ export class Field<
         }
       )
     )
-    const reactions = toArr(this.props.reactions)
-    this.form.addEffects(this, () => {
-      reactions.forEach((reaction) => {
-        if (isFn(reaction)) {
-          this.disposers.push(autorun(() => reaction(this)))
-        }
-      })
-    })
+    createReactions(this)
   }
 
-  get parent() {
-    let parent = this.address.parent()
-    let identifier = parent.toString()
-    if (!identifier) return
-    while (!this.form.fields[identifier]) {
-      parent = parent.parent()
-      identifier = parent.toString()
-      if (!identifier) return
-    }
-    return this.form.fields[identifier]
-  }
-
-  get component() {
-    return [this.componentType, this.componentProps]
-  }
-
-  set component(value: FieldComponent<Component>) {
-    const component = toArr(value)
-    this.componentType = component[0]
-    this.componentProps = component[1] || {}
-  }
-
-  get decorator() {
-    return [this.decoratorType, this.decoratorProps]
-  }
-
-  set decorator(value: FieldDecorator<Decorator>) {
-    const decorator = toArr(value)
-    this.decoratorType = decorator[0]
-    this.decoratorProps = decorator[1] || {}
-  }
-
-  get errors() {
+  get selfErrors() {
     return queryFeedbackMessages(this, {
       type: 'error',
     })
   }
 
-  get warnings() {
+  get errors() {
+    return this.form.errors.filter(createChildrenFeedbackFilter(this))
+  }
+
+  get selfWarnings() {
     return queryFeedbackMessages(this, {
       type: 'warning',
     })
   }
 
-  get successes() {
+  get warnings() {
+    return this.form.warnings.filter(createChildrenFeedbackFilter(this))
+  }
+
+  get selfSuccesses() {
     return queryFeedbackMessages(this, {
       type: 'success',
     })
   }
 
+  get successes() {
+    return this.form.successes.filter(createChildrenFeedbackFilter(this))
+  }
+
+  get selfValid() {
+    return !this.selfErrors.length
+  }
+
   get valid() {
     return !this.errors.length
+  }
+
+  get selfInvalid() {
+    return !this.selfValid
   }
 
   get invalid() {
@@ -351,172 +330,51 @@ export class Field<
     return this.form.getInitialValuesIn(this.path)
   }
 
-  get display(): FieldDisplayTypes {
-    const parentDisplay = this.parent?.display
-    if (parentDisplay && parentDisplay !== 'visible') {
-      if (this.selfDisplay && this.selfDisplay !== 'visible')
-        return this.selfDisplay
-      return parentDisplay
-    }
-    if (this.selfDisplay) return this.selfDisplay
-    return parentDisplay || this.form.display || 'visible'
-  }
-
-  get pattern(): FieldPatternTypes {
-    const parentPattern = this.parent?.pattern
-    if (this.selfPattern) return this.selfPattern
-    return parentPattern || this.form.pattern || 'editable'
-  }
-
   get required() {
-    return parseValidatorDescriptions(this.validator).some(
-      (desc) => desc.required
-    )
-  }
-
-  get hidden() {
-    return this.display === 'hidden'
-  }
-
-  get visible() {
-    return this.display === 'visible'
-  }
-
-  set hidden(hidden: boolean) {
-    if (!isValid(hidden)) return
-    if (hidden) {
-      this.display = 'hidden'
-    } else {
-      this.display = 'visible'
-    }
-  }
-
-  set visible(visible: boolean) {
-    if (!isValid(visible)) return
-    if (visible) {
-      this.display = 'visible'
-    } else {
-      this.display = 'none'
-    }
-  }
-
-  get disabled() {
-    return this.pattern === 'disabled'
-  }
-
-  get readOnly() {
-    return this.pattern === 'readOnly'
-  }
-
-  get readPretty() {
-    return this.pattern === 'readPretty'
-  }
-
-  get editable() {
-    return this.pattern === 'editable'
+    const validators = isArr(this.validator)
+      ? this.validator
+      : parseValidatorDescriptions(this.validator)
+    return validators.some((desc) => !!desc?.['required'])
   }
 
   get validateStatus() {
     if (this.validating) return 'validating'
-    if (this.invalid) return 'error'
-    if (this.warnings.length) return 'warning'
-    if (this.successes.length) return 'success'
-  }
-
-  set readOnly(readOnly: boolean) {
-    if (!isValid(readOnly)) return
-    if (readOnly) {
-      this.pattern = 'readOnly'
-    } else {
-      this.pattern = 'editable'
-    }
-  }
-
-  set editable(editable: boolean) {
-    if (!isValid(editable)) return
-    if (editable) {
-      this.pattern = 'editable'
-    } else {
-      this.pattern = 'readPretty'
-    }
-  }
-
-  set disabled(disabled: boolean) {
-    if (!isValid(disabled)) return
-    if (disabled) {
-      this.pattern = 'disabled'
-    } else {
-      this.pattern = 'editable'
-    }
-  }
-
-  set readPretty(readPretty: boolean) {
-    if (!isValid(readPretty)) return
-    if (readPretty) {
-      this.pattern = 'readPretty'
-    } else {
-      this.pattern = 'editable'
-    }
-  }
-
-  set pattern(pattern: FieldPatternTypes) {
-    this.selfPattern = pattern
-  }
-
-  set display(display: FieldDisplayTypes) {
-    this.selfDisplay = display
+    if (this.selfInvalid) return 'error'
+    if (this.selfWarnings.length) return 'warning'
+    if (this.selfSuccesses.length) return 'success'
   }
 
   set required(required: boolean) {
-    if (!isBool(required)) return
-    const hasRequired = parseValidatorDescriptions(this.validator).some(
-      (desc) => 'required' in desc
-    )
-    if (hasRequired) {
-      if (isArr(this.validator)) {
-        this.validator = this.validator.map((desc: any) => {
-          if (Object.prototype.hasOwnProperty.call(desc, 'required')) {
-            desc.required = required
-            return desc
-          }
-          return desc
-        })
-      } else {
-        this.validator['required'] = required
-      }
-    } else {
-      if (isArr(this.validator)) {
-        this.validator.unshift({
-          required,
-        })
-      } else if (typeof this.validator === 'object') {
-        this.validator['required'] = required
-      } else if (this.validator) {
-        this.validator = [
-          {
-            required,
-          },
-          this.validator,
-        ]
-      } else if (required) {
-        this.validator = [
-          {
-            required,
-          },
-        ]
-      }
-    }
+    if (this.required === required) return
+    this.setValidatorRule('required', required)
   }
 
   set value(value: ValueType) {
+    if (!this.initialized) {
+      if (this.display === 'none') {
+        this.caches.value = value
+        return
+      }
+      if (!allowAssignDefaultValue(this.value, value) && !this.designable) {
+        return
+      }
+    }
     this.form.setValuesIn(this.path, value)
   }
 
   set initialValue(initialValue: ValueType) {
+    if (!this.initialized) {
+      if (
+        !allowAssignDefaultValue(this.initialValue, initialValue) &&
+        !this.designable
+      ) {
+        return
+      }
+    }
     this.form.setInitialValuesIn(this.path, initialValue)
   }
 
-  set errors(messages: FeedbackMessage) {
+  set selfErrors(messages: FeedbackMessage) {
     this.setFeedback({
       type: 'error',
       code: 'EffectError',
@@ -524,7 +382,7 @@ export class Field<
     })
   }
 
-  set warnings(messages: FeedbackMessage) {
+  set selfWarnings(messages: FeedbackMessage) {
     this.setFeedback({
       type: 'warning',
       code: 'EffectWarning',
@@ -532,20 +390,12 @@ export class Field<
     })
   }
 
-  set successes(messages: FeedbackMessage) {
+  set selfSuccesses(messages: FeedbackMessage) {
     this.setFeedback({
       type: 'success',
       code: 'EffectSuccess',
       messages,
     })
-  }
-
-  setTitle = (title?: TextType) => {
-    this.title = title
-  }
-
-  setDescription = (description?: TextType) => {
-    this.description = description
   }
 
   setDataSource = (dataSource?: FieldDataSource) => {
@@ -556,20 +406,24 @@ export class Field<
     updateFeedback(this, feedback)
   }
 
-  setErrors = (messages?: FeedbackMessage) => {
-    this.errors = messages
+  setSelfErrors = (messages?: FeedbackMessage) => {
+    this.selfErrors = messages
   }
 
-  setWarnings = (messages?: FeedbackMessage) => {
-    this.warnings = messages
+  setSelfWarnings = (messages?: FeedbackMessage) => {
+    this.selfWarnings = messages
   }
 
-  setSuccesses = (messages?: FeedbackMessage) => {
-    this.successes = messages
+  setSelfSuccesses = (messages?: FeedbackMessage) => {
+    this.selfSuccesses = messages
   }
 
   setValidator = (validator?: FieldValidator) => {
     this.validator = validator
+  }
+
+  setValidatorRule = (name: string, value: any) => {
+    setValidatorRule(this, name, value)
   }
 
   setRequired = (required?: boolean) => {
@@ -584,112 +438,21 @@ export class Field<
     this.initialValue = initialValue
   }
 
-  setDisplay = (type?: FieldDisplayTypes) => {
-    this.display = type
-  }
-
-  setPattern = (type?: FieldPatternTypes) => {
-    this.pattern = type
-  }
-
   setLoading = (loading?: boolean) => {
-    clearTimeout(this.requests.loading)
-    if (loading) {
-      this.requests.loading = setTimeout(() => {
-        batch(() => {
-          this.loading = loading
-          this.form.notify(LifeCycleTypes.ON_FIELD_LOADING, this)
-        })
-      }, RESPONSE_REQUEST_DURATION)
-    } else if (this.loading !== loading) {
-      this.loading = loading
-    }
+    setLoading(this, loading)
   }
 
   setValidating = (validating?: boolean) => {
-    clearTimeout(this.requests.validating)
-    if (validating) {
-      this.requests.validating = setTimeout(() => {
-        batch(() => {
-          this.validating = validating
-          this.form.notify(LifeCycleTypes.ON_FIELD_VALIDATING, this)
-        })
-      }, RESPONSE_REQUEST_DURATION)
-    } else if (this.validating !== validating) {
-      this.validating = validating
-    }
+    setValidating(this, validating)
   }
 
-  setComponent = <C extends JSXComponent, ComponentProps extends object = {}>(
-    component?: C,
-    props?: ComponentProps
-  ) => {
-    if (component) {
-      this.componentType = component as any
-    }
-    if (props) {
-      this.componentProps = this.componentProps || {}
-      Object.assign(this.componentProps, props)
-    }
+  setSubmitting = (submitting?: boolean) => {
+    setSubmitting(this, submitting)
   }
 
-  setComponentProps = <ComponentProps extends object = {}>(
-    props?: ComponentProps
-  ) => {
-    if (props) {
-      this.componentProps = this.componentProps || {}
-      Object.assign(this.componentProps, props)
-    }
-  }
+  setState: IModelSetter<IFieldState> = createStateSetter(this)
 
-  setDecorator = <D extends JSXComponent, ComponentProps extends object = {}>(
-    component?: D,
-    props?: ComponentProps
-  ) => {
-    if (component) {
-      this.decoratorType = component as any
-    }
-    if (props) {
-      this.decoratorProps = this.decoratorProps || {}
-      Object.assign(this.decoratorProps, props)
-    }
-  }
-
-  setDecoratorProps = <ComponentProps extends object = {}>(
-    props?: ComponentProps
-  ) => {
-    if (props) {
-      this.decoratorProps = this.decoratorProps || {}
-      Object.assign(this.decoratorProps, props)
-    }
-  }
-
-  setState: IModelSetter<IFieldState> = modelStateSetter(this)
-
-  getState: IModelGetter<IFieldState> = modelStateGetter(this)
-
-  onInit = (designable: boolean) => {
-    this.initialized = true
-    batch.scope(() => {
-      initFieldValue(this, designable)
-    })
-    batch.scope(() => {
-      initFieldUpdate(this)
-    })
-    this.form.notify(LifeCycleTypes.ON_FIELD_INIT, this)
-  }
-
-  onMount = () => {
-    this.mounted = true
-    this.unmounted = false
-    this.form.notify(LifeCycleTypes.ON_FIELD_MOUNT, this)
-  }
-
-  onUnmount = () => {
-    this.mounted = false
-    this.unmounted = true
-    this.form.notify(LifeCycleTypes.ON_FIELD_UNMOUNT, this)
-  }
+  getState: IModelGetter<IFieldState> = createStateGetter(this)
 
   onInput = async (...args: any[]) => {
     if (args[0]?.target) {
@@ -701,11 +464,10 @@ export class Field<
     this.inputValue = value
     this.inputValues = values
     this.value = value
-    this.modified = true
-    this.form.modified = true
-    this.form.notify(LifeCycleTypes.ON_FIELD_INPUT_VALUE_CHANGE, this)
-    this.form.notify(LifeCycleTypes.ON_FORM_INPUT_CHANGE, this.form)
-    await this.validate('onInput')
+    this.modify()
+    this.notify(LifeCycleTypes.ON_FIELD_INPUT_VALUE_CHANGE)
+    this.notify(LifeCycleTypes.ON_FORM_INPUT_CHANGE, this.form)
+    await validateSelf(this, 'onInput')
     this.caches.inputting = false
   }
 
@@ -715,7 +477,7 @@ export class Field<
     }
     this.active = true
     this.visited = true
-    await this.validate('onFocus')
+    await validateSelf(this, 'onFocus')
   }
 
   onBlur = async (...args: any[]) => {
@@ -723,93 +485,24 @@ export class Field<
       if (!isHTMLInputEvent(args[0], false)) return
     }
     this.active = false
-    await this.validate('onBlur')
+    await validateSelf(this, 'onBlur')
   }
 
-  validate = async (triggerType?: ValidatorTriggerType) => {
-    const start = () => {
-      this.setValidating(true)
-      this.form.notify(LifeCycleTypes.ON_FIELD_VALIDATE_START, this)
-    }
-    const end = () => {
-      this.setValidating(false)
-      if (this.valid) {
-        this.form.notify(LifeCycleTypes.ON_FIELD_VALIDATE_SUCCESS, this)
-      } else {
-        this.form.notify(LifeCycleTypes.ON_FIELD_VALIDATE_FAILED, this)
-      }
-      this.form.notify(LifeCycleTypes.ON_FIELD_VALIDATE_END, this)
-    }
-    start()
-    if (!triggerType) {
-      const allTriggerTypes = parseValidatorDescriptions(this.validator).map(
-        (desc) => desc.triggerType
-      )
-      const results = {}
-      for (let i = 0; i < allTriggerTypes.length; i++) {
-        const payload = await validateToFeedbacks(this, allTriggerTypes[i])
-        each(payload, (result, key) => {
-          results[key] = results[key] || []
-          results[key] = results[key].concat(result)
-        })
-      }
-      end()
-      return results
-    }
-    const results = await validateToFeedbacks(this, triggerType)
-    end()
-    return results
+  validate = (triggerType?: ValidatorTriggerType) => {
+    return batchValidate(this, `${this.address}.**`, triggerType)
   }
 
-  reset = async (options?: IFieldResetOptions) => {
-    this.modified = false
-    this.visited = false
-    this.feedbacks = []
-    this.inputValue = undefined
-    this.inputValues = []
-    if (options?.forceClear) {
-      if (isArrayField(this)) {
-        this.value = [] as any
-      } else if (isObjectField(this)) {
-        this.value = {} as any
-      } else {
-        this.value = undefined
-      }
-    } else if (isValid(this.value)) {
-      this.value = toJS(this.initialValue)
-    }
-    this.form.notify(LifeCycleTypes.ON_FIELD_RESET, this)
-
-    if (options?.validate) {
-      return await this.validate()
-    }
+  submit = <T>(onSubmit?: (values: any) => Promise<T> | void): Promise<T> => {
+    return batchSubmit(this, onSubmit)
   }
 
-  query = (pattern: FormPathPattern) => {
-    return new Query({
-      pattern,
-      base: this.address,
-      form: this.form,
-    })
+  reset = (options?: IFieldResetOptions) => {
+    return batchReset(this, `${this.address}.**`, options)
   }
 
   queryFeedbacks = (search?: ISearchFeedback): IFieldFeedback[] => {
     return queryFeedbacks(this, search)
   }
 
-  dispose = () => {
-    this.disposers.forEach((dispose) => {
-      dispose()
-    })
-    this.form.removeEffects(this)
-  }
-
-  destroy = () => {
-    this.dispose()
-    delete this.form.fields[this.address.toString()]
-  }
-
-  match = (pattern: FormPathPattern) => {
-    return FormPath.parse(pattern).matchAliasGroup(this.address, this.path)
-  }
+  modify = () => modifySelf(this)
 }

@@ -1,4 +1,5 @@
 import React, { createContext, useContext } from 'react'
+import { useResponsiveFormLayout } from './useResponsiveFormLayout'
 import { usePrefixCls } from '../__builtins__'
 import cls from 'classnames'
 
@@ -7,28 +8,49 @@ export interface IFormLayoutProps {
   className?: string
   style?: React.CSSProperties
   colon?: boolean
-  labelAlign?: 'right' | 'left'
-  wrapperAlign?: 'right' | 'left'
+  labelAlign?: 'right' | 'left' | ('right' | 'left')[]
+  wrapperAlign?: 'right' | 'left' | ('right' | 'left')[]
   labelWrap?: boolean
   labelWidth?: number
   wrapperWidth?: number
   wrapperWrap?: boolean
-  labelCol?: number
-  wrapperCol?: number
+  labelCol?: number | number[]
+  wrapperCol?: number | number[]
   fullness?: boolean
   size?: 'small' | 'default' | 'large'
-  layout?: 'vertical' | 'horizontal' | 'inline'
+  layout?:
+    | 'vertical'
+    | 'horizontal'
+    | 'inline'
+    | ('vertical' | 'horizontal' | 'inline')[]
   direction?: 'rtl' | 'ltr'
   inset?: boolean
   shallow?: boolean
   tooltipLayout?: 'icon' | 'text'
+  tooltipIcon?: React.ReactNode
   feedbackLayout?: 'loose' | 'terse' | 'popover' | 'none'
   bordered?: boolean
+  breakpoints?: number[]
+  gridColumnGap?: number
+  gridRowGap?: number
+  spaceGap?: number
 }
 
-export const FormLayoutDeepContext = createContext<IFormLayoutProps>(null)
+export interface IFormLayoutContext
+  extends Omit<
+    IFormLayoutProps,
+    'labelAlign' | 'wrapperAlign' | 'layout' | 'labelCol' | 'wrapperCol'
+  > {
+  labelAlign?: 'right' | 'left'
+  wrapperAlign?: 'right' | 'left'
+  layout?: 'vertical' | 'horizontal' | 'inline'
+  labelCol?: number
+  wrapperCol?: number
+}
 
-export const FormLayoutShallowContext = createContext<IFormLayoutProps>(null)
+export const FormLayoutDeepContext = createContext<IFormLayoutContext>(null)
+
+export const FormLayoutShallowContext = createContext<IFormLayoutContext>(null)
 
 export const useFormDeepLayout = () => useContext(FormLayoutDeepContext)
 
@@ -40,12 +62,13 @@ export const useFormLayout = () => ({
 })
 
 export const FormLayout: React.FC<IFormLayoutProps> & {
-  useFormLayout: () => IFormLayoutProps
-  useFormDeepLayout: () => IFormLayoutProps
-  useFormShallowLayout: () => IFormLayoutProps
-} = ({ shallow, children, prefix, className, style, ...props }) => {
+  useFormLayout: () => IFormLayoutContext
+  useFormDeepLayout: () => IFormLayoutContext
+  useFormShallowLayout: () => IFormLayoutContext
+} = ({ shallow, children, prefix, className, style, ...otherProps }) => {
+  const { ref, props } = useResponsiveFormLayout(otherProps)
   const deepLayout = useFormDeepLayout()
-  const formPrefixCls = usePrefixCls('form')
+  const formPrefixCls = usePrefixCls('form', { prefix })
   const layoutPrefixCls = usePrefixCls('formily-layout', { prefix })
   const layoutClassName = cls(
     layoutPrefixCls,
@@ -79,7 +102,7 @@ export const FormLayout: React.FC<IFormLayoutProps> & {
     )
   }
   return (
-    <div className={layoutClassName} style={style}>
+    <div ref={ref} className={layoutClassName} style={style}>
       {renderChildren()}
     </div>
   )

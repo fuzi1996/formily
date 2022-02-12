@@ -64,6 +64,7 @@ export default () => {
           </SchemaField.Void>
           <SchemaField.Void
             x-component="ArrayItems.Addition"
+            x-component-props={{ method: 'unshift' }}
             title="添加条目"
           />
         </SchemaField.Array>
@@ -776,3 +777,7 @@ export default () => {
 ### ArrayItems.useIndex
 
 > 读取当前渲染行索引的 React Hook
+
+### ArrayItems.useRecord
+
+> 读取当前渲染记录的 React Hook

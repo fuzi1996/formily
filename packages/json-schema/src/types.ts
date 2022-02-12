@@ -1,10 +1,14 @@
-import { IGeneralFieldState } from '@formily/core'
+import {
+  IGeneralFieldState,
+  GeneralField,
+  FormPathPattern,
+} from '@formily/core'
 export type SchemaEnum<Message> = Array<
   | string
   | number
   | boolean
-  | { label: Message; value: any; [key: string]: any }
-  | { key: any; title: Message; [key: string]: any }
+  | { label?: Message; value?: any; [key: string]: any }
+  | { key?: any; title?: Message; [key: string]: any }
 >
 
 export type SchemaTypes =
@@ -60,11 +64,19 @@ export type SchemaEffectTypes =
 export type SchemaReaction<Field = any> =
   | {
       dependencies?:
-        | Array<string | { name?: string; source?: string; property?: string }>
+        | Array<
+            | string
+            | {
+                name?: string
+                type?: string
+                source?: string
+                property?: string
+              }
+          >
         | Record<string, string>
       when?: string | boolean
       target?: string
-      effects?: SchemaEffectTypes[]
+      effects?: (SchemaEffectTypes | (string & {}))[]
       fulfill?: {
         state?: Stringify<IGeneralFieldState>
         schema?: ISchema
@@ -116,28 +128,29 @@ export type SchemaItems<
 
 export type SchemaComponents = Record<string, any>
 
-export interface ISchemaFieldFactoryOptions<
-  Components extends SchemaComponents = any
-> {
-  components?: Components
-  scope?: any
-}
-
 export interface ISchemaFieldUpdateRequest {
   state?: Stringify<IGeneralFieldState>
   schema?: ISchema
   run?: string
 }
 
-export interface ISchemaTransformerOptions extends ISchemaFieldFactoryOptions {
-  required?: ISchema['required']
+export interface IFieldStateSetterOptions {
+  field: GeneralField
+  target?: FormPathPattern
+  request: ISchemaFieldUpdateRequest
+  runner?: string
+  scope?: any
+}
+
+export interface ISchemaTransformerOptions {
+  scope?: any
 }
 
 export type Stringify<P extends { [key: string]: any }> = {
   /**
    * Use `string & {}` instead of string to keep Literal Type for ISchema#component and ISchema#decorator
    */
-  [key in keyof P]?: P[key] | (string & {})
+  [key in keyof P]?: P[key] | string
 }
 
 export type ISchema<
@@ -240,6 +253,8 @@ export type ISchema<
     Message
   >
 
+  ['x-value']?: any
+
   //顺序描述
   ['x-index']?: number
   //交互模式
@@ -261,6 +276,8 @@ export type ISchema<
   //内容
   ['x-content']?: any
 
+  ['x-data']?: any
+
   ['x-visible']?: boolean
 
   ['x-hidden']?: boolean
@@ -272,4 +289,6 @@ export type ISchema<
   ['x-read-only']?: boolean
 
   ['x-read-pretty']?: boolean
+
+  [key: `x-${string | number}` | symbol]: any
 }>

@@ -7,7 +7,7 @@ Formily 的表单校验使用了极其强大且灵活的@formily/validator 校�
 
 同时我们还能在 effects 或者 x-reactions/reactions 中实现联动校验
 
-具体规则校验文档参考 [FieldValidator](https://core.formilyjs.org/api/models/field#fieldvalidator)
+具体规则校验文档参考 [FieldValidator](https://core.formilyjs.org/zh-CN/api/models/field#fieldvalidator)
 
 ## 内置规则校验
 
@@ -1955,7 +1955,7 @@ export default () => (
         title="AA"
         required
         x-reactions={(field) => {
-          field.errors =
+          field.selfErrors =
             field.query('bb').value() >= field.value ? 'AA必须大于BB' : ''
         }}
         x-component="NumberPicker"
@@ -1966,7 +1966,7 @@ export default () => (
         title="BB"
         required
         x-reactions={(field) => {
-          field.errors =
+          field.selfErrors =
             field.query('aa').value() <= field.value ? 'AA必须大于BB' : ''
         }}
         x-component="NumberPicker"
@@ -2001,7 +2001,7 @@ const schema = {
       title: 'AA',
       required: true,
       'x-reactions': `{{(field) => {
-          field.errors =
+          field.selfErrors =
             field.query('bb').value() >= field.value ? 'AA必须大于BB' : ''
       }}}`,
       'x-component': 'NumberPicker',
@@ -2014,7 +2014,7 @@ const schema = {
         dependencies: ['aa'],
         fulfill: {
           state: {
-            errors: "{{$deps[0] <= $self.value ? 'AA必须大于BB' : ''}}",
+            selfErrors: "{{$deps[0] <= $self.value ? 'AA必须大于BB' : ''}}",
           },
         },
       },
@@ -2048,7 +2048,7 @@ export default () => (
       title="AA"
       required
       reactions={(field) => {
-        field.errors =
+        field.selfErrors =
           field.query('bb').value() >= field.value ? 'AA必须大于BB' : ''
       }}
       component={[NumberPicker]}
@@ -2059,7 +2059,7 @@ export default () => (
       title="BB"
       required
       reactions={(field) => {
-        field.errors =
+        field.selfErrors =
           field.query('aa').value() <= field.value ? 'AA必须大于BB' : ''
       }}
       component={[NumberPicker]}
@@ -2071,7 +2071,7 @@ export default () => (
 
 ## 定制校验文案
 
-主要通过[registerValidateLocale](https://core.formilyjs.org/api/entry/form-validator-registry#registervalidatelocale)来定制内置校验文案
+主要通过[registerValidateLocale](https://core.formilyjs.org/zh-CN/api/entry/form-validator-registry#registervalidatelocale)来定制内置校验文案
 
 ```tsx
 import React from 'react'

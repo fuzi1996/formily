@@ -228,7 +228,7 @@ export default () => {
           }}
         />
         <SchemaField.String
-          title="fixed content width (wraperWidth)"
+          title="fixed content width (wrapperWidth)"
           x-decorator="FormItem"
           x-component="Input"
           x-decorator-props={{
@@ -487,7 +487,7 @@ export default () => {
             bordered: false,
           }}
         />
-        <SchemaField.String
+        <SchemaField.Boolean
           name="Switch"
           title="Switch"
           x-decorator="FormItem"
@@ -616,7 +616,7 @@ export default () => {
             inset: true,
           }}
         />
-        <SchemaField.String
+        <SchemaField.Boolean
           name="Switch"
           title="Switch"
           x-decorator="FormItem"
@@ -1023,7 +1023,7 @@ export default () => {
             x-component="TreeSelect"
             required
           />
-          <SchemaField.String
+          <SchemaField.Boolean
             name="Switch"
             title="Switch"
             x-decorator="FormItem"
@@ -1051,6 +1051,7 @@ export default () => {
 | colon          | boolean                                                | colon                                                                                            | true          |
 | tooltip        | ReactNode                                              | Question mark prompt                                                                             | -             |
 | tooltipLayout  | `"icon" \| "text"`                                     | Ask the prompt layout                                                                            | `"icon"`      |
+| tooltipIcon    | ReactNode                                              | Ask the prompt icon                                                                              | `?`           |
 | labelAlign     | `"left"` \| `"right"`                                  | Label text alignment                                                                             | `"right"`     |
 | labelWrap      | boolean                                                | Label change, otherwise an ellipsis appears, hover has tooltip                                   | false         |
 | labelWidth     | `number \| string`                                     | Label fixed width                                                                                | -             |

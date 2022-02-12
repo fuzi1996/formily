@@ -68,7 +68,7 @@ export default () => {
                 align: 'center',
               }}
             >
-              <SchemaField.String
+              <SchemaField.Void
                 x-decorator="FormItem"
                 required
                 x-component="ArrayTable.Index"
@@ -548,7 +548,7 @@ const schema = {
             'x-component-props': { width: 100, title: 'Explicitly hidden->A2' },
             properties: {
               a1: {
-                type: 'string',
+                type: 'boolean',
                 'x-decorator': 'FormItem',
                 'x-component': 'Switch',
               },
@@ -745,6 +745,10 @@ Note: The title attribute can receive the title mapping in the Field model, that
 
 No attributes
 
-### ArrayItems.useIndex
+### ArrayTable.useIndex
 
 > Read the React Hook of the current rendering row index
+
+### ArrayTable.useRecord
+
+> Read the React Hook of the current rendering row

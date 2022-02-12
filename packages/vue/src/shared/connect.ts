@@ -1,4 +1,3 @@
-import { Vue2Component } from '../types/vue2'
 import { isVue2, markRaw, defineComponent } from 'vue-demi'
 import { isFn, isStr, FormPath, each } from '@formily/shared'
 import { isVoidField, GeneralField } from '@formily/core'
@@ -12,7 +11,6 @@ import type {
   IComponentMapper,
   IStateMapper,
   VueComponentProps,
-  DefineComponent,
 } from '../types'
 
 export function mapProps<T extends VueComponent = VueComponent>(
@@ -21,6 +19,7 @@ export function mapProps<T extends VueComponent = VueComponent>(
   return (target: T) => {
     return observer(
       defineComponent<VueComponentProps<T>>({
+        name: target.name ? `Connected${target.name}` : `ConnectedComponent`,
         // listeners is needed for vue2
         setup(props, { attrs, slots, listeners }: Record<string, any>) {
           const fieldRef = useField()
@@ -63,7 +62,7 @@ export function mapProps<T extends VueComponent = VueComponent>(
             )
           }
         },
-      }) as unknown as DefineComponent<VueComponentProps<T>>
+      })
     )
   }
 }
@@ -75,6 +74,7 @@ export function mapReadPretty<T extends VueComponent, C extends VueComponent>(
   return (target: T) => {
     return observer(
       defineComponent({
+        name: target.name ? `Read${target.name}` : `ReadComponent`,
         setup(props, { attrs, slots, listeners }: Record<string, any>) {
           const fieldRef = useField()
           return () => {
@@ -94,7 +94,7 @@ export function mapReadPretty<T extends VueComponent, C extends VueComponent>(
             )
           }
         },
-      }) as unknown as DefineComponent<VueComponentProps<T>>
+      })
     )
   }
 }
@@ -102,27 +102,29 @@ export function mapReadPretty<T extends VueComponent, C extends VueComponent>(
 export function connect<T extends VueComponent>(
   target: T,
   ...args: IComponentMapper[]
-) {
+): T {
   const Component = args.reduce((target: VueComponent, mapper) => {
     return mapper(target)
   }, target)
   /* istanbul ignore else */
   if (isVue2) {
-    const functionalComponent = {
+    const functionalComponent = defineComponent({
       functional: true,
+      name: target.name,
       render(h, context) {
-        return h(Component as Vue2Component, context.data, context.children)
+        return h(Component, context.data, context.children)
       },
-    }
-    return markRaw(functionalComponent)
+    })
+    return markRaw(functionalComponent) as T
   } else {
     const functionalComponent = defineComponent({
-      setup(props: VueComponentProps<T>, { attrs, slots }) {
+      name: target.name,
+      setup(props, { attrs, slots }) {
         return () => {
           return h(Component, { props, attrs }, slots)
         }
       },
     })
-    return markRaw(functionalComponent)
+    return markRaw(functionalComponent) as T
   }
 }

@@ -6,7 +6,7 @@ hero:
   desc: 阿里巴巴统一前端表单解决方案
   actions:
     - text: 主站文档
-      link: //v2.formilyjs.org
+      link: //formilyjs.org
     - text: 开发指南
       link: /zh-CN/guide
 features:
@@ -61,7 +61,7 @@ const FormItem = observer(({ children }) => {
   return (
     <Form.Item
       label={field.title}
-      help={field.errors?.length ? field.errors : undefined}
+      help={field.selfErrors?.length ? field.selfErrors : undefined}
       extra={field.description}
       validateStatus={field.validateStatus}
     >
@@ -86,9 +86,9 @@ export default () => {
       field.value &&
       form.values[equalName] !== field.value
     ) {
-      field.errors = ['Password does not match Confirm Password.']
+      field.selfErrors = ['Password does not match Confirm Password.']
     } else {
-      field.errors = []
+      field.selfErrors = []
     }
   }
 

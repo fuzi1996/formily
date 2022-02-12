@@ -171,7 +171,6 @@ export function FormDialog(
               cancelText,
               okButtonProps,
               cancelButtonProps,
-              loadingText,
               ...dialogProps
             } = this.dialogProps
 
@@ -212,20 +211,17 @@ export function FormDialog(
                       },
                     },
                     {
-                      default: () => [
-                        h(component, {}, {}),
+                      default: () => [h(component, {}, {})],
+                      title: () =>
                         h(
                           'div',
-                          {
-                            slot: 'title',
-                          },
+                          {},
                           { default: () => resolveComponent(title) }
                         ),
+                      footer: () =>
                         h(
                           'div',
-                          {
-                            slot: 'footer',
-                          },
+                          {},
                           {
                             default: () => {
                               const FooterProtalTarget = h(
@@ -296,7 +292,6 @@ export function FormDialog(
                             },
                           }
                         ),
-                      ],
                     }
                   ),
               }
@@ -335,7 +330,7 @@ export function FormDialog(
       }
       return formDialog
     },
-    open: (props: Formily.Core.Types.IFormProps) => {
+    open: (props: IFormProps) => {
       if (env.promise) return env.promise
 
       env.promise = new Promise(async (resolve, reject) => {
@@ -403,9 +398,7 @@ const FormDialogFooter = defineComponent({
             to: PORTAL_TARGET_NAME,
           },
         },
-        {
-          default: () => h(Fragment, {}, slots),
-        }
+        slots
       )
     }
   },

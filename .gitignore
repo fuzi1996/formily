@@ -10,6 +10,7 @@ lib/
 esm/
 temp_esm/
 dist/
+type-artefacts/
 build/
 coverage/
 node_modules/
@@ -18,7 +19,6 @@ examples/test
 TODO.md
 tsconfig.tsbuildinfo
 package/
-benchmark
 package.zip
 .umi
 .umi-production

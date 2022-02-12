@@ -35,6 +35,7 @@ export type ArrayBaseMixins = {
   Index?: typeof ArrayBaseIndex
   useArray?: typeof useArray
   useIndex?: typeof useIndex
+  useRecord?: typeof useRecord
 }
 
 export interface IArrayBaseProps {
@@ -44,6 +45,7 @@ export interface IArrayBaseProps {
 
 export interface IArrayBaseItemProps {
   index: number
+  record: any
 }
 
 export interface IArrayBaseContext {
@@ -58,15 +60,20 @@ export interface IArrayBaseContext {
 
 const ArrayBaseSymbol: InjectionKey<IArrayBaseContext> =
   Symbol('ArrayBaseContext')
-const ItemSymbol: InjectionKey<Ref<number>> = Symbol('ItemContext')
+const ItemSymbol: InjectionKey<IArrayBaseItemProps> = Symbol('ItemContext')
 
 const useArray = () => {
   return inject(ArrayBaseSymbol, null)
 }
 
 const useIndex = (index?: number) => {
-  const indexRef = inject(ItemSymbol)
+  const { index: indexRef } = toRefs(inject(ItemSymbol))
   return indexRef ?? ref(index)
+}
+
+const useRecord = (record?: number) => {
+  const { record: recordRef } = toRefs(inject(ItemSymbol))
+  return recordRef ?? ref(record)
 }
 
 const isObjectValue = (schema: Schema) => {
@@ -99,14 +106,14 @@ const useKey = (schema: Schema) => {
         if (!keyMap.has(record)) {
           keyMap.set(record, uid())
         }
-        return keyMap.get(record)
+        return `${keyMap.get(record)}-${index}`
       }
 
       if (!keyMap[index]) {
         keyMap[index] = uid()
       }
 
-      return keyMap[index]
+      return `${keyMap[index]}-${index}`
     },
   }
 }
@@ -155,10 +162,9 @@ const ArrayBaseInner = defineComponent<IArrayBaseProps>({
 
 const ArrayBaseItem = defineComponent({
   name: 'ArrayBaseItem',
-  props: ['index'],
+  props: ['index', 'record'],
   setup(props: IArrayBaseItemProps, { slots }) {
-    const { index } = toRefs(props)
-    provide(ItemSymbol, index)
+    provide(ItemSymbol, props)
     return () => {
       return h(Fragment, {}, slots)
     }
@@ -201,10 +207,12 @@ const ArrayBaseIndex = defineComponent({
   name: 'ArrayBaseIndex',
   setup(props, { attrs }) {
     const index = useIndex()
+    const prefixCls = `${stylePrefix}-array-base`
     return () => {
       return h(
         'span',
         {
+          class: `${prefixCls}-index`,
           attrs,
         },
         {
@@ -420,4 +428,5 @@ export const ArrayBase = composeExport(ArrayBaseInner, {
   useArray: useArray,
   useIndex: useIndex,
   useKey: useKey,
+  useRecord: useRecord,
 })

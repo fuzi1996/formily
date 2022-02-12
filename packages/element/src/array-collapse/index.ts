@@ -135,7 +135,7 @@ export const ArrayCollapseInner = observer(
             const path = field.address.concat(index)
             const errors = field.form.queryFeedbacks({
               type: 'error',
-              address: `*(${path},${path}.*)`,
+              address: `${path}.**`,
             })
 
             const title = h(
@@ -143,6 +143,7 @@ export const ArrayCollapseInner = observer(
               {
                 props: {
                   index,
+                  record: item,
                 },
               },
               {
@@ -182,6 +183,7 @@ export const ArrayCollapseInner = observer(
               {
                 props: {
                   index,
+                  record: item,
                 },
               },
               {
@@ -237,12 +239,15 @@ export const ArrayCollapseInner = observer(
                     {
                       props: {
                         index,
+                        record: item,
                       },
                     },
                     {
                       default: () => [content],
                     }
                   ),
+                ],
+                title: () =>
                   h(
                     Row,
                     {
@@ -251,7 +256,6 @@ export const ArrayCollapseInner = observer(
                         type: 'flex',
                         justify: 'space-between',
                       },
-                      slot: 'title',
                     },
                     {
                       default: () => [
@@ -260,7 +264,6 @@ export const ArrayCollapseInner = observer(
                       ],
                     }
                   ),
-                ],
               }
             )
           })
@@ -379,6 +382,7 @@ export const ArrayCollapse = composeExport(ArrayCollapseInner, {
   MoveUp: ArrayBase.MoveUp,
   useArray: ArrayBase.useArray,
   useIndex: ArrayBase.useIndex,
+  useRecord: ArrayBase.useRecord,
 })
 
 export default ArrayCollapse

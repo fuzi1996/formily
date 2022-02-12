@@ -83,7 +83,7 @@ export default () => (
     titleStyle={{ paddingBottom: 100, fontWeight: 'bold' }}
   >
     <a href="//core.formilyjs.org" target="_blank" rel="noreferrer">
-      <img src="//img.alicdn.com/imgextra/i3/O1CN0191vNVu1TYxFZA3KGN_!!6000000002395-55-tps-1939-1199.svg" />
+      <img src="//img.alicdn.com/imgextra/i4/O1CN019qbf1b1ChnTfT9x3X_!!6000000000113-55-tps-1939-1199.svg" />
     </a>
   </Section>
 )
@@ -125,7 +125,7 @@ export default () => (
     titleStyle={{ paddingBottom: 140, fontWeight: 'bold' }}
   >
     <QrCodeGroup>
-      <QrCode link="//img.alicdn.com/imgextra/i2/O1CN010HJI5V1nFWmwSvj1q_!!6000000005060-0-tps-1284-1644.jpg" />
+      <QrCode link="//img.alicdn.com/imgextra/i2/O1CN01n7kuJW1nrXhBw3Nud_!!6000000005143-0-tps-1284-1644.jpg" />
       <QrCode
         title="Already Full"
         link="//img.alicdn.com/imgextra/i3/O1CN018neaqX1HvbT6SUIbp_!!6000000000820-0-tps-1284-1644.jpg"

@@ -110,6 +110,7 @@ export const ArrayCollapse: ComposedArrayCollapse = observer(
       return (
         <Collapse
           {...props}
+          onChange={() => {}}
           expandedKeys={expandKeys.map(String)}
           onExpand={(keys: string[]) => setExpandKeys(toArr(keys).map(Number))}
           className={cls(`${prefixCls}-item`, props.className)}
@@ -129,10 +130,10 @@ export const ArrayCollapse: ComposedArrayCollapse = observer(
               const path = field.address.concat(index)
               const errors = field.form.queryFeedbacks({
                 type: 'error',
-                address: `*(${path},${path}.*)`,
+                address: `${path}.**`,
               })
               return (
-                <ArrayBase.Item index={index}>
+                <ArrayBase.Item index={index} record={item}>
                   <div
                     className={cls(`${prefixCls}-item-title`, props.className)}
                   >
@@ -185,10 +186,11 @@ export const ArrayCollapse: ComposedArrayCollapse = observer(
               <Collapse.Panel
                 {...props}
                 {...panelProps}
+                onChange={() => {}}
                 key={index}
                 title={title()}
               >
-                <ArrayBase.Item index={index} key={index}>
+                <ArrayBase.Item index={index} key={index} record={item}>
                   {content}
                 </ArrayBase.Item>
               </Collapse.Panel>

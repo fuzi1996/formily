@@ -22,13 +22,13 @@ export class Query {
     this.form = props.form
     if (!this.pattern.isMatchPattern) {
       const identifier = this.pattern.toString()
-      const index = this.form.indexes.get(identifier)
+      const indexIdentifier = this.form.indexes[identifier]
       const absoluteField = this.form.fields[identifier]
-      const indexField = this.form.fields[index]
+      const indexField = this.form.fields[indexIdentifier]
       if (absoluteField) {
         this.addresses = [identifier]
       } else if (indexField) {
-        this.addresses = [index]
+        this.addresses = [indexIdentifier]
       }
     } else {
       each(this.form.fields, (field, address) => {
@@ -49,17 +49,19 @@ export class Query {
 
   map(): GeneralField[]
   map<Result>(
-    mapper?: (field: GeneralField, address: FormPath) => Result
+    iterator?: (field: GeneralField, address: FormPath) => Result
   ): Result[]
-  map(mapper?: any): any {
+  map(iterator?: any): any {
     return this.addresses.map((address) =>
-      output(this.form.fields[address], mapper)
+      output(this.form.fields[address], iterator)
     )
   }
 
-  forEach<Result>(eacher: (field: GeneralField, address: FormPath) => Result) {
+  forEach<Result>(
+    iterator: (field: GeneralField, address: FormPath) => Result
+  ) {
     return this.addresses.forEach((address) =>
-      output(this.form.fields[address], eacher)
+      output(this.form.fields[address], iterator)
     )
   }
 
@@ -88,10 +90,10 @@ export class Query {
   }
 
   value() {
-    return this.form.getValuesIn(this.pattern)
+    return this.get('value')
   }
 
   initialValue() {
-    return this.form.getInitialValuesIn(this.pattern)
+    return this.get('initialValue')
   }
 }

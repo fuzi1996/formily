@@ -1,8 +1,10 @@
+import { Component } from 'vue'
 import { h, toRaw } from '@vue/composition-api'
-import { Component, VNode } from 'vue'
+import { SlotTypes } from '.'
+import { isVnode } from './utils'
 
 export const resolveComponent = (
-  child?: Component | string | number | ((...args: any[]) => VNode[] | VNode),
+  child?: SlotTypes,
   props?: Record<string, any>
 ) => {
   if (child) {
@@ -10,8 +12,10 @@ export const resolveComponent = (
       return child
     } else if (typeof child === 'function') {
       return (child as Function)(props)
+    } else if (isVnode(child)) {
+      return child
     } else {
-      return h(toRaw(child), { props })
+      return h(toRaw(child as Component), { props })
     }
   }
 

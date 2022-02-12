@@ -2,7 +2,7 @@ import { defineComponent, ref } from '@vue/composition-api'
 import { observer } from '@formily/reactive-vue'
 import { ArrayField } from '@formily/core'
 import { h, useField, useFieldSchema, RecursionField } from '@formily/vue'
-import { Tabs, TabPane, Badge, Button } from 'element-ui'
+import { Tabs, TabPane, Badge } from 'element-ui'
 import { stylePrefix } from '../__builtins__/configs'
 
 import type { Tabs as TabsProps } from 'element-ui'
@@ -11,7 +11,7 @@ export const ArrayTabs = observer(
   defineComponent<TabsProps>({
     name: 'ArrayTabs',
     props: [],
-    setup(props, { attrs }) {
+    setup(props, { attrs, listeners }) {
       const fieldRef = useField<ArrayField>()
       const schemaRef = useFieldSchema()
 
@@ -42,36 +42,17 @@ export const ArrayTabs = observer(
           }
         }
 
-        const addButton = h(
-          Button,
-          {
-            class: [`${prefixCls}-addition`],
-            attrs: {
-              size: 'large',
-              icon: 'el-icon-plus',
-            },
-            on: {
-              click: (e: MouseEvent) => {
-                e.stopPropagation()
-                e.preventDefault()
-                onEdit(null, 'add')
-              },
-            },
-          },
-          {}
-        )
-
         const badgedTab = (index: number) => {
           const tab = `${field.title || 'Untitled'} ${index + 1}`
           const path = field.address.concat(index)
           const errors = field.form.queryFeedbacks({
             type: 'error',
-            address: `*(${path},${path}.*)`,
+            address: `${path}.**`,
           })
           if (errors.length) {
             return h(
               'span',
-              { slot: 'label' },
+              {},
               {
                 default: () => [
                   h(
@@ -86,19 +67,15 @@ export const ArrayTabs = observer(
                       default: () => [tab],
                     }
                   ),
-                  index === dataSource.length - 1 ? addButton : null,
                 ],
               }
             )
           }
           return h(
             'span',
-            { slot: 'label' },
+            {},
             {
-              default: () => [
-                tab,
-                index === dataSource.length - 1 ? addButton : null,
-              ],
+              default: () => [tab],
             }
           )
         }
@@ -120,7 +97,7 @@ export const ArrayTabs = observer(
                 },
               },
               {
-                default: () => [
+                default: () =>
                   h(
                     RecursionField,
                     {
@@ -131,8 +108,8 @@ export const ArrayTabs = observer(
                     },
                     {}
                   ),
-                  badgedTab(index),
-                ],
+
+                label: () => [badgedTab(index)],
               }
             )
           })
@@ -147,10 +124,18 @@ export const ArrayTabs = observer(
               addable: true,
             },
             on: {
+              ...listeners,
               input: (key) => {
                 activeKey.value = key
               },
-              'tab-remove': (target) => onEdit(target, 'remove'),
+              'tab-remove': (target) => {
+                onEdit(target, 'remove')
+                listeners?.['tab-remove']?.(target)
+              },
+              'tab-add': () => {
+                onEdit(null, 'add')
+                listeners?.['tab-add']?.()
+              },
             },
           },
           {

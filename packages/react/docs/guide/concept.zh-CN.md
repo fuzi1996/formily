@@ -106,7 +106,7 @@ formily 的协议驱动主要是基于标准 JSON Schema 来进行驱动渲染�
 
 ![](https://img.alicdn.com/imgextra/i3/O1CN01jLCRxH1aa3V0x6nw4_!!6000000003345-55-tps-2200-1147.svg)
 
-总结下来，在@formily/react 中，主要有 2 层绑定关系，Schema 绑定模型，模型绑定组件，实现绑定的胶水层就是@formily/react，需要注意的是，Schema 绑定字段模型之后，字段模型中是感知不到 Schema 的，比如要修改`enum`，就是修改字段模型中的`dataSource`属性了，总之，想要更新字段模型，参考[Field](//core.formilyjs.org/models/field)，想要理解 Schema 与字段模型的映射关系可以参考[Schema](/api/shared/schema)文档
+总结下来，在@formily/react 中，主要有 2 层绑定关系，Schema 绑定模型，模型绑定组件，实现绑定的胶水层就是@formily/react，需要注意的是，Schema 绑定字段模型之后，字段模型中是感知不到 Schema 的，比如要修改`enum`，就是修改字段模型中的`dataSource`属性了，总之，想要更新字段模型，参考[Field](//core.formilyjs.org/zh-CN/api/models/field)，想要理解 Schema 与字段模型的映射关系可以参考[Schema](/api/shared/schema)文档
 
 ## 三种开发模式
 
@@ -185,7 +185,7 @@ Markup Schema 模式主要有以下几个特点：
 
 - 主要依赖 SchemaField.String/SchemaField.Array/SchemaField.Object...这类描述标签来表达 Schema
 - 每个描述标签都代表一个 Schema 节点，与 JSON-Schema 等价
-- SchemaField 子节点不能随意插 UI 元素，因为 SchemaField 只会解析子节点的所有 Schema 描述标签，然后转换成 JSON Schema，最终交给[RecursionField](/api/components/recursion-field)渲染，如果想要插入 UI 元素，可以在 VoidDield 上传`x-content`属性来插入 UI 元素
+- SchemaField 子节点不能随意插 UI 元素，因为 SchemaField 只会解析子节点的所有 Schema 描述标签，然后转换成 JSON Schema，最终交给[RecursionField](/api/components/recursion-field)渲染，如果想要插入 UI 元素，可以在 VoidField 上传`x-content`属性来插入 UI 元素
 
 ```tsx
 import React from 'react'

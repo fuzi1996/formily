@@ -7,7 +7,7 @@ import {
   useField,
   RecursionField,
 } from '../index'
-import { render, fireEvent, waitFor } from '@testing-library/react'
+import { render, fireEvent, waitFor, act } from '@testing-library/react'
 
 const Input: React.FC<{
   value?: string
@@ -175,6 +175,49 @@ describe('markup schema field', () => {
         </SchemaField.Markup>
       </FormProvider>
     )
+  })
+  test('props children', () => {
+    const form = createForm()
+    const Text: React.FC = (props) => {
+      return <div data-testid="children-test">{props.children}</div>
+    }
+    const SchemaField = createSchemaField({
+      components: {
+        Text,
+      },
+    })
+    const { queryByTestId } = render(
+      <FormProvider form={form}>
+        <SchemaField>
+          <SchemaField.Void
+            x-component="Text"
+            x-component-props={{ children: 'props' }}
+          />
+        </SchemaField>
+      </FormProvider>
+    )
+    expect(queryByTestId('children-test')).toBeVisible()
+    expect(queryByTestId('children-test').innerHTML).toEqual('props')
+  })
+  test('x-content', () => {
+    const form = createForm()
+    const Text: React.FC = (props) => {
+      return <div data-testid="content-test">{props.children}</div>
+    }
+    const SchemaField = createSchemaField({
+      components: {
+        Text,
+      },
+    })
+    const { queryByTestId } = render(
+      <FormProvider form={form}>
+        <SchemaField>
+          <SchemaField.Void x-component="Text" x-content="content" />
+        </SchemaField>
+      </FormProvider>
+    )
+    expect(queryByTestId('content-test')).toBeVisible()
+    expect(queryByTestId('content-test').innerHTML).toEqual('content')
   })
 })
 
@@ -531,7 +574,7 @@ test('expression scope', async () => {
         'x-reactions': {
           dependencies: ['aa'],
           fulfill: {
-            run: '{{ cc() }}',
+            run: 'cc()',
           },
         },
       },
@@ -552,4 +595,377 @@ test('expression scope', async () => {
 
   await waitFor(() => queryByTestId('cc'))
   expect(cc).toBeTruthy()
+})
+
+test('expression x-content', async () => {
+  const form = createForm()
+  const SchemaField = createSchemaField({
+    components: {
+      Wrapper: (props) => props.children,
+    },
+    scope: {
+      child: <div data-testid="child"></div>,
+    },
+  })
+
+  const { queryByTestId } = render(
+    <FormProvider form={form}>
+      <SchemaField>
+        <SchemaField.String
+          name="aaa"
+          x-component="Wrapper"
+          x-content="{{child}}"
+        />
+      </SchemaField>
+    </FormProvider>
+  )
+
+  await waitFor(() => {
+    expect(queryByTestId('child')).not.toBeUndefined()
+  })
+})
+
+test('expression x-visible', async () => {
+  const form = createForm()
+  const SchemaField = createSchemaField({
+    components: {
+      AAA: () => <div>AAA</div>,
+      BBB: () => <div>BBB</div>,
+    },
+  })
+
+  const { queryByText } = render(
+    <FormProvider form={form}>
+      <SchemaField>
+        <SchemaField.String name="aaa" x-component="AAA" />
+        <SchemaField.String
+          name="bbb"
+          x-component="BBB"
+          x-visible="{{$form.values.aaa === 123}}"
+        />
+      </SchemaField>
+    </FormProvider>
+  )
+
+  await waitFor(() => {
+    expect(queryByText('BBB')).toBeNull()
+  })
+  act(() => {
+    form.values.aaa = 123
+  })
+  await waitFor(() => {
+    expect(queryByText('BBB')).not.toBeNull()
+  })
+})
+
+test('expression x-value', async () => {
+  const form = createForm({
+    values: {
+      aaa: 1,
+    },
+  })
+  const SchemaField = createSchemaField({
+    components: {
+      Text: (props) => <div>{props.value}</div>,
+    },
+  })
+
+  const { queryByText } = render(
+    <FormProvider form={form}>
+      <SchemaField>
+        <SchemaField.String name="aaa" x-component="Text" />
+        <SchemaField.String
+          name="bbb"
+          x-component="Text"
+          x-value="{{$form.values.aaa * 10}}"
+        />
+      </SchemaField>
+    </FormProvider>
+  )
+
+  await waitFor(() => {
+    expect(queryByText('10')).not.toBeNull()
+  })
+  act(() => {
+    form.values.aaa = 10
+  })
+  await waitFor(() => {
+    expect(queryByText('100')).not.toBeNull()
+  })
+})
+
+test('nested update component props with expression', async () => {
+  const form = createForm({
+    values: {
+      aaa: 'xxx',
+    },
+  })
+  const SchemaField = createSchemaField({
+    components: {
+      Text: (props) => <div>{props.aa?.bb?.cc}</div>,
+    },
+  })
+
+  const { queryByText } = render(
+    <FormProvider form={form}>
+      <SchemaField>
+        <SchemaField.String name="aaa" x-component="Text" />
+        <SchemaField.String
+          name="bbb"
+          x-component="Text"
+          x-component-props={{ aa: { bb: { cc: '{{$form.values.aaa}}' } } }}
+        />
+      </SchemaField>
+    </FormProvider>
+  )
+  await waitFor(() => {
+    expect(queryByText('xxx')).not.toBeNull()
+  })
+  act(() => {
+    form.values.aaa = '10'
+  })
+  await waitFor(() => {
+    expect(queryByText('10')).not.toBeNull()
+  })
+})
+
+test('nested update component props with x-reactions', async () => {
+  const form = createForm({
+    values: {
+      aaa: 'xxx',
+    },
+  })
+  const SchemaField = createSchemaField({
+    components: {
+      Text: (props) => <div>{props.aa?.bb?.cc}</div>,
+    },
+  })
+
+  const { queryByText } = render(
+    <FormProvider form={form}>
+      <SchemaField>
+        <SchemaField.String name="aaa" x-component="Text" />
+        <SchemaField.String
+          name="bbb"
+          x-component="Text"
+          x-reactions={{
+            fulfill: {
+              schema: {
+                'x-component-props.aa.bb.cc': '{{$form.values.aaa}}',
+              } as any,
+            },
+          }}
+        />
+      </SchemaField>
+    </FormProvider>
+  )
+  await waitFor(() => {
+    expect(queryByText('xxx')).not.toBeNull()
+  })
+  act(() => {
+    form.values.aaa = '10'
+  })
+  await waitFor(() => {
+    expect(queryByText('10')).not.toBeNull()
+  })
+})
+
+test('schema x-validator/required', async () => {
+  const form = createForm({
+    values: {
+      aaa: 'xxx',
+    },
+  })
+  const SchemaField = createSchemaField({
+    components: {
+      Input: () => <div></div>,
+    },
+  })
+
+  render(
+    <FormProvider form={form}>
+      <SchemaField>
+        <SchemaField.String
+          name="input"
+          required
+          x-validator="email"
+          x-component="Input"
+        />
+      </SchemaField>
+    </FormProvider>
+  )
+  await waitFor(() => {
+    expect(form.query('input').get('required')).toBeTruthy()
+    expect(form.query('input').get('validator')).toEqual([
+      { required: true },
+      { format: 'email' },
+    ])
+  })
+})
+
+test('schema x-reactions when undefined', async () => {
+  const form = createForm({
+    values: {
+      aaa: 'xxx',
+    },
+  })
+  const SchemaField = createSchemaField({
+    components: {
+      Input: () => <div data-testid="input"></div>,
+      Select: () => <div data-testid="select"></div>,
+    },
+  })
+
+  const { queryByTestId } = render(
+    <FormProvider form={form}>
+      <SchemaField>
+        <SchemaField.String name="input" required x-component="Input" />
+        <SchemaField.String
+          name="select"
+          required
+          x-component="Select"
+          x-reactions={{
+            when: '{{$values.input}}',
+            fulfill: {
+              state: {
+                visible: true,
+              },
+            },
+            otherwise: {
+              state: {
+                visible: false,
+              },
+            },
+          }}
+        />
+      </SchemaField>
+    </FormProvider>
+  )
+  await waitFor(() => {
+    expect(queryByTestId('input')).not.toBeNull()
+    expect(queryByTestId('select')).toBeNull()
+  })
+})
+
+test('void field children', async () => {
+  const form = createForm()
+  const SchemaField = createSchemaField({
+    components: {
+      Button: (props) => (
+        <div data-testid="btn">{props.children || 'placeholder'}</div>
+      ),
+    },
+  })
+
+  const { queryByTestId } = render(
+    <FormProvider form={form}>
+      <SchemaField>
+        <SchemaField.Void x-component="Button" />
+      </SchemaField>
+    </FormProvider>
+  )
+  await waitFor(() => {
+    expect(queryByTestId('btn').textContent).toBe('placeholder')
+  })
+})
+
+test('x-reactions runner for target', async () => {
+  const form = createForm()
+  const getTarget = jest.fn()
+  const SchemaField = createSchemaField({
+    components: {
+      Input: () => <div></div>,
+      Button: (props) => (
+        <button
+          data-testid="btn"
+          onClick={(e) => {
+            e.preventDefault()
+            props.onChange('123')
+          }}
+        >
+          Click {props.value}
+        </button>
+      ),
+    },
+    scope: {
+      getTarget,
+    },
+  })
+
+  const { getByTestId } = render(
+    <FormProvider form={form}>
+      <SchemaField>
+        <SchemaField.String name="target" default="333" x-component="Input" />
+        <SchemaField.String
+          x-component="Button"
+          x-reactions={{
+            target: 'target',
+            effects: ['onFieldInputValueChange'],
+            fulfill: {
+              run: 'getTarget($target.value)',
+            },
+          }}
+        />
+      </SchemaField>
+    </FormProvider>
+  )
+  fireEvent.click(getByTestId('btn'))
+  await waitFor(() => {
+    expect(getByTestId('btn').textContent).toBe('Click 123')
+    expect(getTarget).toBeCalledWith('333')
+    expect(getTarget).toBeCalledTimes(1)
+  })
+})
+
+test('multi x-reactions isolate effect', async () => {
+  const form = createForm()
+  const otherEffect = jest.fn()
+  const SchemaField = createSchemaField({
+    components: {
+      Input: () => <div data-testid="input"></div>,
+      Button: (props) => (
+        <button
+          data-testid="btn"
+          onClick={(e) => {
+            e.preventDefault()
+            props.onChange('123')
+          }}
+        >
+          Click {props.value}
+        </button>
+      ),
+    },
+  })
+
+  const { getByTestId, queryByTestId } = render(
+    <FormProvider form={form}>
+      <SchemaField>
+        <SchemaField.String
+          name="target"
+          x-reactions={[
+            otherEffect,
+            {
+              dependencies: ['btn'],
+              fulfill: {
+                state: {
+                  visible: '{{$deps[0] === "123"}}',
+                },
+              },
+            },
+          ]}
+          x-component="Input"
+        />
+        <SchemaField.String name="btn" x-component="Button" />
+      </SchemaField>
+    </FormProvider>
+  )
+  await waitFor(() => {
+    expect(queryByTestId('input')).toBeNull()
+  })
+  fireEvent.click(getByTestId('btn'))
+  await waitFor(() => {
+    expect(getByTestId('btn').textContent).toBe('Click 123')
+    expect(getByTestId('input')).not.toBeNull()
+    expect(otherEffect).toBeCalledTimes(1)
+  })
 })

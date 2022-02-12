@@ -48,9 +48,9 @@
 
 扩展属性
 
-| 属性名 | 类型 | 描述 | 默认值 |
-| ------ | ---- | ---- | ------ ||
-| title | string | 文案 | |
+| 属性名 | 类型    | 描述       | 默认值   |
+| ------ | ------- | ---------- | -------- | -------- |
+| title  | string  | 文案       |          |
 | method | `'push' | 'unshift'` | 添加方式 | `'push'` |
 
 其余参考 [https://element.eleme.io/#/zh-CN/component/button](https://element.eleme.io/#/zh-CN/component/button)
@@ -102,3 +102,7 @@
 ### ArrayTable.useIndex
 
 > 读取当前渲染行索引的 Hook
+
+### ArrayTable.useRecord
+
+> 读取当前渲染记录的 Hook

@@ -228,7 +228,7 @@ export default () => {
           }}
         />
         <SchemaField.String
-          title="固定内容宽度(wraperWidth)"
+          title="固定内容宽度(wrapperWidth)"
           x-decorator="FormItem"
           x-component="Input"
           x-decorator-props={{
@@ -487,7 +487,7 @@ export default () => {
             bordered: false,
           }}
         />
-        <SchemaField.String
+        <SchemaField.Boolean
           name="Switch"
           title="Switch"
           x-decorator="FormItem"
@@ -616,7 +616,7 @@ export default () => {
             inset: true,
           }}
         />
-        <SchemaField.String
+        <SchemaField.Boolean
           name="Switch"
           title="Switch"
           x-decorator="FormItem"
@@ -1023,7 +1023,7 @@ export default () => {
             x-component="TreeSelect"
             required
           />
-          <SchemaField.String
+          <SchemaField.Boolean
             name="Switch"
             title="Switch"
             x-decorator="FormItem"
@@ -1050,7 +1050,8 @@ export default () => {
 | className      | string                                                 | 组件样式类名                                | -         |
 | colon          | boolean                                                | 冒号                                        | true      |
 | tooltip        | ReactNode                                              | 问号提示                                    | -         |
-| tooltipLayout  | `"icon" \| "text"`                                     | 问提示布局                                  | `"icon"`  |
+| tooltipLayout  | `"icon" \| "text"`                                     | 问号提示布局                                | `"icon"`  |
+| tooltipIcon    | ReactNode                                              | 问号提示图标                                | `?`       |
 | labelAlign     | `"left"` \| `"right"`                                  | 标签文本对齐方式                            | `"right"` |
 | labelWrap      | boolean                                                | 标签换⾏，否则出现省略号，hover 有 tooltip  | false     |
 | labelWidth     | `number \| string`                                     | 标签固定宽度                                | -         |

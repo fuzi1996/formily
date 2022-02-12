@@ -1,4 +1,5 @@
-@import '~antd/lib/style/themes/default.less';
+@root-entry-name: 'default';
+@import (reference) '~antd/es/style/themes/index.less';
 
 @array-table-prefix-cls: ~'@{ant-prefix}-formily-array-table';
 
@@ -32,6 +33,9 @@
           z-index: 1;
           border-radius: 3px;
           box-shadow: 0 0 10px #eee;
+          animation: none;
+          transform: translateY(0);
+          opacity: 1;
         }
       }
     }

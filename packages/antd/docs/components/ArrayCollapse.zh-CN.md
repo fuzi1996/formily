@@ -189,7 +189,7 @@ const schema = {
       maxItems: 3,
       'x-decorator': 'FormItem',
       items: {
-        type: 'object',
+        type: 'void',
         'x-component': 'ArrayCollapse.CollapsePanel',
         'x-component-props': {
           header: '字符串数组',
@@ -625,3 +625,7 @@ export default () => {
 ### ArrayCollapse.useIndex
 
 > 读取当前渲染行索引的 React Hook
+
+### ArrayCollapse.useRecord
+
+> 读取当前渲染记录的 React Hook

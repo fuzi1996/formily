@@ -189,7 +189,7 @@ const schema = {
       maxItems: 3,
       'x-decorator': 'FormItem',
       items: {
-        type: 'object',
+        type: 'void',
         'x-component': 'ArrayCollapse.CollapsePanel',
         'x-component-props': {
           header: 'String array',
@@ -625,3 +625,7 @@ No attributes
 ### ArrayCollapse.useIndex
 
 > Read the React Hook of the current rendering row index
+
+### ArrayCollapse.useRecord
+
+> Read the React Hook of the current rendering row
