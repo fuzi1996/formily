@@ -47,7 +47,6 @@
 .#{$form-item-cls}-label {
   position: relative;
   display: flex;
-
   &-content {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -76,6 +75,7 @@
 }
 
 .#{$form-item-cls}-label label {
+  cursor: text;
   color: rgba(0, 0, 0, 0.85);
 }
 
@@ -355,7 +355,7 @@
   > .#{$form-item-cls}-control {
     > .#{$form-item-cls}-control-content {
       > .#{$form-item-cls}-control-content-component {
-        > *:first-child:not(.#{$css-prefix}switch, .#{$css-prefix}icon, .#{$css-prefix}formily-icon, .anticon) {
+        > *:first-child:not(.#{$css-prefix}switch):not(.#{$css-prefix}icon):not(.#{$css-prefix}formily-icon):not(.anticon) {
           width: 100%;
         }
       }

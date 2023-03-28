@@ -9,7 +9,7 @@ import { terser } from 'rollup-plugin-terser'
 
 const presets = () => {
   const externals = {
-    antd: 'Antd',
+    antd: 'antd',
     vue: 'Vue',
     react: 'React',
     moment: 'moment',
@@ -96,8 +96,11 @@ export default (filename, targetName, ...plugins) => {
         amd: {
           id: filename,
         },
+        globals: {
+          '@formily/json-schema': 'Formily.JSONSchema',
+        },
       },
-      external: ['react', 'react-dom', 'react-is'],
+      external: ['react', 'react-dom', 'react-is', '@formily/json-schema'],
       plugins: [...presets(), ...plugins, createEnvPlugin('development')],
     },
     {
@@ -110,8 +113,11 @@ export default (filename, targetName, ...plugins) => {
         amd: {
           id: filename,
         },
+        globals: {
+          '@formily/json-schema': 'Formily.JSONSchema',
+        },
       },
-      external: ['react', 'react-dom', 'react-is'],
+      external: ['react', 'react-dom', 'react-is', '@formily/json-schema'],
       plugins: [
         ...presets(),
         terser(),

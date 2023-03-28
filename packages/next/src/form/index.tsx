@@ -1,12 +1,19 @@
 import React, { useMemo } from 'react'
-import { FormProvider, JSXComponent, useForm } from '@formily/react'
+import {
+  FormProvider,
+  RecordScope,
+  JSXComponent,
+  useParentForm,
+} from '@formily/react'
 import { FormLayout, IFormLayoutProps } from '../form-layout'
 import { ConfigProvider } from '@alifd/next'
 import {
   getValidateLocaleIOSCode,
   setValidateLanguage,
   Form as FormType,
+  ObjectField,
   IFormFeedback,
+  isForm,
 } from '@formily/core'
 import { PreviewText } from '../preview-text'
 export interface FormProps extends IFormLayoutProps {
@@ -17,7 +24,7 @@ export interface FormProps extends IFormLayoutProps {
   previewTextPlaceholder?: React.ReactNode
 }
 
-export const Form: React.FC<FormProps> = ({
+export const Form: React.FC<React.PropsWithChildren<FormProps>> = ({
   form,
   component,
   onAutoSubmit,
@@ -25,7 +32,7 @@ export const Form: React.FC<FormProps> = ({
   previewTextPlaceholder,
   ...props
 }) => {
-  const top = useForm()
+  const top = useParentForm()
   const lang =
     (ConfigProvider as any).getContext()?.locale?.momentLocale ?? 'zh-CN'
   useMemo(() => {
@@ -33,22 +40,24 @@ export const Form: React.FC<FormProps> = ({
     setValidateLanguage(validateLanguage)
   }, [lang])
 
-  const renderContent = (form: FormType) => (
-    <PreviewText.Placeholder value={previewTextPlaceholder}>
-      <FormLayout {...props}>
-        {React.createElement(
-          component,
-          {
-            onSubmit(e: React.FormEvent) {
-              e?.stopPropagation?.()
-              e?.preventDefault?.()
-              form.submit(onAutoSubmit).catch(onAutoSubmitFailed)
+  const renderContent = (form: FormType | ObjectField) => (
+    <RecordScope getRecord={() => (isForm(form) ? form.values : form.value)}>
+      <PreviewText.Placeholder value={previewTextPlaceholder}>
+        <FormLayout {...props}>
+          {React.createElement(
+            component,
+            {
+              onSubmit(e: React.FormEvent) {
+                e?.stopPropagation?.()
+                e?.preventDefault?.()
+                form.submit(onAutoSubmit).catch(onAutoSubmitFailed)
+              },
             },
-          },
-          props.children
-        )}
-      </FormLayout>
-    </PreviewText.Placeholder>
+            props.children
+          )}
+        </FormLayout>
+      </PreviewText.Placeholder>
+    </RecordScope>
   )
 
   if (form)

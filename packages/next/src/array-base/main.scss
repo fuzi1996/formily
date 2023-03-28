@@ -2,14 +2,22 @@
 
 $array-base-prefix-cls: '#{$css-prefix}formily-array-base';
 
-.#{$array-base-prefix-cls}-remove {
+.#{$array-base-prefix-cls}-remove,
+.#{$array-base-prefix-cls}-copy {
   transition: all 0.25s ease-in-out;
   color: $color-text1-3;
   font-size: 16px;
-  margin-right: 6px;
 
   &:hover {
     color: $color-text1-1;
+  }
+
+  &-disabled {
+    color: $color-text1-1;
+    cursor: not-allowed !important;
+    &:hover {
+      color: $color-text1-1;
+    }
   }
 }
 
@@ -21,10 +29,17 @@ $array-base-prefix-cls: '#{$css-prefix}formily-array-base';
   transition: all 0.25s ease-in-out;
   color: $color-text1-3;
   font-size: 16px;
-  margin-right: 6px;
 
   &:hover {
     color: $color-text1-1;
+  }
+
+  &-disabled {
+    color: $color-text1-1;
+    cursor: not-allowed !important;
+    &:hover {
+      color: $color-text1-1;
+    }
   }
 }
 
@@ -32,10 +47,17 @@ $array-base-prefix-cls: '#{$css-prefix}formily-array-base';
   transition: all 0.25s ease-in-out;
   color: $color-text1-3;
   font-size: 16px;
-  margin-right: 6px;
 
   &:hover {
     color: $color-text1-1;
+  }
+
+  &-disabled {
+    color: $color-text1-1;
+    cursor: not-allowed !important;
+    &:hover {
+      color: $color-text1-1;
+    }
   }
 }
 

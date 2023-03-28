@@ -12,6 +12,8 @@ const TransformElInput = transformComponent<InputProps>(ElInput, {
 
 const InnerInput = connect(
   TransformElInput,
+  // readOnly 是 Field的属性
+  // readonly 是 element-ui Input组件 的属性
   mapProps({ readOnly: 'readonly' }),
   mapReadPretty(PreviewText.Input)
 )

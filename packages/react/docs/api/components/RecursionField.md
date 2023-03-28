@@ -12,7 +12,7 @@ The recursive rendering component is mainly based on [JSON-Schema](/api/shared/s
 
 ```ts
 interface IRecursionFieldProps {
-  schema: Schema //schema object
+  schema: ISchema //Field schema
   name?: string //Path name
   basePath?: FormPathPattern //base path
   onlyRenderProperties?: boolean //Whether to only render properties
@@ -21,7 +21,7 @@ interface IRecursionFieldProps {
   filterProperties?: (schema: Schema, name: string) => boolean //schema properties filter, the filtered schema nodes will not be rendered
 }
 
-type RecursionField = React.FC<IRecursionFieldProps>
+type RecursionField = React.FC<React.PropsWithChildren<IRecursionFieldProps>>
 ```
 
 ## Example

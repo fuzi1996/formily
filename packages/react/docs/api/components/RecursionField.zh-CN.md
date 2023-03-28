@@ -12,7 +12,7 @@ order: 5
 
 ```ts
 interface IRecursionFieldProps {
-  schema: Schema //schema对象
+  schema: ISchema //字段schema
   name?: string //路径名称
   basePath?: FormPathPattern //基础路径
   onlyRenderProperties?: boolean //是否只渲染properties
@@ -21,7 +21,7 @@ interface IRecursionFieldProps {
   filterProperties?: (schema: Schema, name: string) => boolean //schema properties过滤器，被过滤掉的schema节点不会被渲染
 }
 
-type RecursionField = React.FC<IRecursionFieldProps>
+type RecursionField = React.FC<React.PropsWithChildren<IRecursionFieldProps>>
 ```
 
 ## 用例

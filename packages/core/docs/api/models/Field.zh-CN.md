@@ -80,11 +80,11 @@ order: 1
 
 **hidden**
 
-为 true 时是 display 为 hidden，为 false 时是 display 为 visible
+为 true 时， display 为 hidden；为 false 时 display 为 visible
 
 **visible**
 
-为 true 时是 display 为 visible，为 false 时是 display 为 none
+为 true 时， display 为 visible；为 false 时 display 为 none
 
 ## 方法
 
@@ -664,6 +664,34 @@ interface match {
 ```
 
 FormPathPattern API 参考 [FormPath](/api/entry/form-path#formpathpattern)
+
+### inject
+
+#### 描述
+
+给字段模型注入可执行方法
+
+#### 签名
+
+```ts
+interface inject {
+  (actions: Record<string, (...args: any[]) => any>): void
+}
+```
+
+### invoke
+
+#### 描述
+
+调用字段模型通过 inject 注入的可执行方法
+
+#### 签名
+
+```ts
+interface invoke {
+  (name: string, ...args: any[]): any
+}
+```
 
 ## 类型
 

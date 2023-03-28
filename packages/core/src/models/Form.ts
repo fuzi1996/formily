@@ -122,6 +122,7 @@ export class Form<ValueType extends object = any> {
   protected makeObservable() {
     define(this, {
       fields: observable.shallow,
+      indexes: observable.shallow,
       initialized: observable.ref,
       validating: observable.ref,
       submitting: observable.ref,
@@ -155,8 +156,6 @@ export class Form<ValueType extends object = any> {
       deleteValuesIn: action,
       setSubmitting: action,
       setValidating: action,
-      setFormGraph: action,
-      clearFormGraph: action,
       reset: action,
       submit: action,
       validate: action,
@@ -294,7 +293,7 @@ export class Form<ValueType extends object = any> {
     Component extends JSXComponent
   >(
     props: IFieldFactoryProps<Decorator, Component>
-  ) => {
+  ): Field<Decorator, Component> => {
     const address = FormPath.parse(props.basePath).concat(props.name)
     const identifier = address.toString()
     if (!identifier) return
@@ -304,7 +303,7 @@ export class Form<ValueType extends object = any> {
       })
       this.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE)
     }
-    return this.fields[identifier] as Field<Decorator, Component>
+    return this.fields[identifier] as any
   }
 
   createArrayField = <
@@ -312,7 +311,7 @@ export class Form<ValueType extends object = any> {
     Component extends JSXComponent
   >(
     props: IFieldFactoryProps<Decorator, Component>
-  ) => {
+  ): ArrayField<Decorator, Component> => {
     const address = FormPath.parse(props.basePath).concat(props.name)
     const identifier = address.toString()
     if (!identifier) return
@@ -330,7 +329,7 @@ export class Form<ValueType extends object = any> {
       })
       this.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE)
     }
-    return this.fields[identifier] as ArrayField<Decorator, Component>
+    return this.fields[identifier] as any
   }
 
   createObjectField = <
@@ -338,7 +337,7 @@ export class Form<ValueType extends object = any> {
     Component extends JSXComponent
   >(
     props: IFieldFactoryProps<Decorator, Component>
-  ) => {
+  ): ObjectField<Decorator, Component> => {
     const address = FormPath.parse(props.basePath).concat(props.name)
     const identifier = address.toString()
     if (!identifier) return
@@ -356,7 +355,7 @@ export class Form<ValueType extends object = any> {
       })
       this.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE)
     }
-    return this.fields[identifier] as ObjectField<Decorator, Component>
+    return this.fields[identifier] as any
   }
 
   createVoidField = <
@@ -364,7 +363,7 @@ export class Form<ValueType extends object = any> {
     Component extends JSXComponent
   >(
     props: IVoidFieldFactoryProps<Decorator, Component>
-  ) => {
+  ): VoidField<Decorator, Component> => {
     const address = FormPath.parse(props.basePath).concat(props.name)
     const identifier = address.toString()
     if (!identifier) return
@@ -374,7 +373,7 @@ export class Form<ValueType extends object = any> {
       })
       this.notify(LifeCycleTypes.ON_FORM_GRAPH_CHANGE)
     }
-    return this.fields[identifier] as VoidField<Decorator, Component>
+    return this.fields[identifier] as any
   }
 
   /** 状态操作模型 **/
@@ -563,7 +562,7 @@ export class Form<ValueType extends object = any> {
 
   onUnmount = () => {
     this.notify(LifeCycleTypes.ON_FORM_UNMOUNT)
-    this.query('*').forEach((field) => field.destroy())
+    this.query('*').forEach((field) => field.destroy(false))
     this.disposers.forEach((dispose) => dispose())
     this.unmounted = true
     this.indexes = {}
@@ -593,9 +592,9 @@ export class Form<ValueType extends object = any> {
     this.graph.setGraph(graph)
   }
 
-  clearFormGraph = (pattern: FormPathPattern = '*') => {
+  clearFormGraph = (pattern: FormPathPattern = '*', forceClear = true) => {
     this.query(pattern).forEach((field) => {
-      field.destroy()
+      field.destroy(forceClear)
     })
   }
 

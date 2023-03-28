@@ -1,22 +1,28 @@
+import { ArrayField } from '@formily/core'
+import { clone, isValid, uid } from '@formily/shared'
+import {
+  ExpressionScope,
+  Fragment,
+  h,
+  useField,
+  useFieldSchema,
+} from '@formily/vue'
 import {
   defineComponent,
-  provide,
-  InjectionKey,
-  Ref,
   inject,
-  toRefs,
-  ref,
+  InjectionKey,
   onBeforeUnmount,
   PropType,
-} from '@vue/composition-api'
-import { Fragment, useField, useFieldSchema, h } from '@formily/vue'
-import { isValid, uid, clone } from '@formily/shared'
-import { ArrayField } from '@formily/core'
+  provide,
+  Ref,
+  ref,
+  toRefs,
+} from 'vue-demi'
 import { stylePrefix } from '../__builtins__/configs'
 
+import type { Schema } from '@formily/json-schema'
 import type { Button as ButtonProps } from 'element-ui'
 import { Button } from 'element-ui'
-import type { Schema } from '@formily/json-schema'
 import { HandleDirective } from 'vue-slicksort'
 import { composeExport } from '../__builtins__/shared'
 
@@ -166,7 +172,13 @@ const ArrayBaseItem = defineComponent({
   setup(props: IArrayBaseItemProps, { slots }) {
     provide(ItemSymbol, props)
     return () => {
-      return h(Fragment, {}, slots)
+      return h(
+        ExpressionScope,
+        { props: { value: { $record: props.record, $index: props.index } } },
+        {
+          default: () => h(Fragment, {}, slots),
+        }
+      )
     }
   },
 })
@@ -430,3 +442,5 @@ export const ArrayBase = composeExport(ArrayBaseInner, {
   useKey: useKey,
   useRecord: useRecord,
 })
+
+export default ArrayBase

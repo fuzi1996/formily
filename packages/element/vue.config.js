@@ -36,5 +36,7 @@ module.exports = {
         },
       ]
     })
+
+    config.devtools = 'source-map'
   },
 }

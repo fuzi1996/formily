@@ -17,29 +17,31 @@ import { CollapseProps, PanelProps } from '@alifd/next/lib/collapse'
 export interface IArrayCollapseProps extends CollapseProps {
   defaultOpenPanelCount?: number
 }
-type ComposedArrayCollapse = React.FC<IArrayCollapseProps> &
+type ComposedArrayCollapse = React.FC<
+  React.PropsWithChildren<IArrayCollapseProps>
+> &
   ArrayBaseMixins & {
-    CollapsePanel?: React.FC<PanelProps>
+    CollapsePanel?: React.FC<React.PropsWithChildren<PanelProps>>
   }
 
 const isAdditionComponent = (schema: ISchema) => {
-  return schema['x-component']?.indexOf('Addition') > -1
+  return schema['x-component']?.indexOf?.('Addition') > -1
 }
 
 const isIndexComponent = (schema: ISchema) => {
-  return schema['x-component']?.indexOf('Index') > -1
+  return schema['x-component']?.indexOf?.('Index') > -1
 }
 
 const isRemoveComponent = (schema: ISchema) => {
-  return schema['x-component']?.indexOf('Remove') > -1
+  return schema['x-component']?.indexOf?.('Remove') > -1
 }
 
 const isMoveUpComponent = (schema: ISchema) => {
-  return schema['x-component']?.indexOf('MoveUp') > -1
+  return schema['x-component']?.indexOf?.('MoveUp') > -1
 }
 
 const isMoveDownComponent = (schema: ISchema) => {
-  return schema['x-component']?.indexOf('MoveDown') > -1
+  return schema['x-component']?.indexOf?.('MoveDown') > -1
 }
 
 const isOperationComponent = (schema: ISchema) => {
@@ -190,7 +192,11 @@ export const ArrayCollapse: ComposedArrayCollapse = observer(
                 key={index}
                 title={title()}
               >
-                <ArrayBase.Item index={index} key={index} record={item}>
+                <ArrayBase.Item
+                  index={index}
+                  key={index}
+                  record={() => field.value?.[index]}
+                >
                   {content}
                 </ArrayBase.Item>
               </Collapse.Panel>
@@ -213,7 +219,9 @@ export const ArrayCollapse: ComposedArrayCollapse = observer(
   }
 )
 
-const CollapsePanel: React.FC<PanelProps> = ({ children }) => {
+const CollapsePanel: React.FC<React.PropsWithChildren<PanelProps>> = ({
+  children,
+}) => {
   return <Fragment>{children}</Fragment>
 }
 

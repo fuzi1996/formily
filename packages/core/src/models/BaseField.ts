@@ -1,4 +1,11 @@
-import { FormPath, FormPathPattern, isValid, toArr } from '@formily/shared'
+import {
+  FormPath,
+  FormPathPattern,
+  isValid,
+  toArr,
+  each,
+  isFn,
+} from '@formily/shared'
 import {
   JSXComponent,
   LifeCycleTypes,
@@ -6,6 +13,7 @@ import {
   FieldPatternTypes,
   FieldDecorator,
   FieldComponent,
+  IFieldActions,
 } from '../types'
 import { locateNode, destroy, initFieldUpdate } from '../shared/internals'
 import { Form } from './Form'
@@ -37,13 +45,15 @@ export class BaseField<Decorator = any, Component = any, TextType = any> {
 
   disposers: (() => void)[] = []
 
+  actions: IFieldActions = {}
+
   locate(address: FormPathPattern) {
     this.form.fields[address.toString()] = this as any
     locateNode(this as any, address)
   }
 
   get indexes() {
-    return this.path.transform(/\d/, (...args) =>
+    return this.path.transform(/^\d+$/, (...args) =>
       args.map((index) => Number(index))
     )
   }
@@ -95,9 +105,16 @@ export class BaseField<Decorator = any, Component = any, TextType = any> {
   }
 
   get pattern(): FieldPatternTypes {
-    const parentPattern = (this.parent as any)?.pattern
-    if (isValid(this.selfPattern)) return this.selfPattern
-    return parentPattern || this.form.pattern || 'editable'
+    const parentPattern: FieldPatternTypes =
+      (this.parent as any)?.pattern || this.form.pattern || 'editable'
+    const selfPattern = this.selfPattern
+    if (isValid(selfPattern)) {
+      if (parentPattern === 'readPretty' && selfPattern !== 'editable') {
+        return parentPattern
+      }
+      return selfPattern
+    }
+    return parentPattern
   }
 
   get editable() {
@@ -122,6 +139,10 @@ export class BaseField<Decorator = any, Component = any, TextType = any> {
 
   get visible() {
     return this.display === 'visible'
+  }
+
+  get destroyed() {
+    return !this.form.fields[this.address.toString()]
   }
 
   set hidden(hidden: boolean) {
@@ -291,11 +312,23 @@ export class BaseField<Decorator = any, Component = any, TextType = any> {
     this.form.removeEffects(this)
   }
 
-  destroy = () => {
-    destroy(this.form.fields, this.address.toString())
+  destroy = (forceClear = true) => {
+    destroy(this.form.fields, this.address.toString(), forceClear)
   }
 
   match = (pattern: FormPathPattern) => {
     return FormPath.parse(pattern).matchAliasGroup(this.address, this.path)
+  }
+
+  inject = (actions: IFieldActions) => {
+    each(actions, (action, key) => {
+      if (isFn(action)) {
+        this.actions[key] = action
+      }
+    })
+  }
+
+  invoke = (name: string, ...args: any[]) => {
+    return this.actions[name]?.(...args)
   }
 }

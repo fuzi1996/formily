@@ -38,7 +38,6 @@ const { SchemaField } = createSchemaField({
     Input,
   },
 })
-
 export default {
   components: { Form, SchemaField, Submit },
   data() {
