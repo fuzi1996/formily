@@ -44,10 +44,10 @@ const registry = {
 
 const getISOCode = (language: string) => {
   let isoCode = registry.locales.language
-  const lang = lowerCase(language)
   if (registry.locales.messages[language]) {
     return language
   }
+  const lang = lowerCase(language)
   each(
     registry.locales.messages,
     (messages: IRegistryLocaleMessages, key: string) => {

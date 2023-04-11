@@ -69,8 +69,11 @@ const mergeSlots = (
       }
     }
   }
-  const patchSlot = (slotName: string) => () =>
-    slots[slotName]?.({ field, form: field.form }) ?? []
+  const patchSlot =
+    (slotName: string) =>
+    (...originArgs) =>
+      slots[slotName]?.({ field, form: field.form, ...originArgs[0] }) ?? []
+
   const patchedSlots: Record<string, (...args: any) => unknown[]> = {}
   slotNames.forEach((name) => {
     patchedSlots[name] = patchSlot(name)
