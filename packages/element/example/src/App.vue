@@ -1,16 +1,13 @@
 <template>
   <div>
-    <example />
+    <!-- <example /> -->
+    <calculate />
   </div>
 </template>
 
 <script>
-import Example from './components/example.vue'
 export default {
   name: 'App',
-  components: {
-    Example,
-  },
   data() {
     return {
       msg: 'msg',
